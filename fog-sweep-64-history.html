@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="The design decisions, playtest feedback and four source versions of Fog Sweep 64.">
+<meta name="description" content="The design decisions, playtest feedback and technical history of Fog Sweep 64.">
 <title>How We Built Fog Sweep 64</title>
 <style>
   :root {
@@ -72,8 +72,12 @@
   <p><em>Sweep the Fog</em> was the trial name. Sriram initially suggested <em>Sweep Factor 64</em> for the finished game and later chose <em>Fog Sweep 64</em>. He asked for a final fanfare, the total score and time, and a breakdown by round. He confirmed that rounds should have a completion cue and that sound should start on.</p>
   <p>Rounds 1–3 end with a short chime. The last round ends with a longer rising fanfare and a sustained chord. The player can mute audio from the header. The final screen gives the first-try score out of 64 and the sum of all four round times, alongside the score and time for each round. Each round’s timer runs from the first tap to the last match, so time between rounds and on the review screens is excluded.</p>
 
+  <h2>Pause and resume</h2>
+  <p>Sriram spotted two effects of stepping away mid-round. The break increased the round and game times, and a break between two taps could also earn a Slow label. He pointed to the pause in Prime Factor 64 as the model.</p>
+  <p><strong>Pause</strong> now hides the boards and blocks tile input. <strong>Resume</strong> restores the same boards and selection. The round timer and the time between taps use the same active-play clock, with pauses subtracted. The Slow threshold remains five seconds of active play.</p>
+
   <h2>Technical version log</h2>
-  <p class="note">Counts come from the saved <code>dist/index.html</code> at each Git commit. Blank lines count. CSS and JavaScript count lines inside their tags. HTML counts the remaining lines, including the tags. Changes are additions and deletions to this file from the preceding version.</p>
+  <p class="note">Entries 1–4 count the saved <code>dist/index.html</code> at each original commit. Entry 5 counts <code>fog-sweep-64.html</code> in Update 2, with changes measured against GitHub commit <code>96ec5a8</code>. Blank lines count. CSS and JavaScript count lines inside their tags. HTML counts the remaining lines, including the tags.</p>
   <div class="table-scroll" role="region" aria-label="Technical version log" tabindex="0">
     <table>
       <thead><tr><th scope="col">Version</th><th scope="col">JS LOC</th><th scope="col">CSS LOC</th><th scope="col">HTML LOC</th><th scope="col">Total LOC</th><th scope="col">Diff</th><th scope="col">Feature change</th><th scope="col">Implementation</th></tr></thead>
@@ -102,10 +106,17 @@
             <td class="numeric">684</td><td class="numeric">+109 / −15</td>
             <td>Renames the game, turns sound on by default and adds the final score and time breakdown.</td><td>Accumulates scores and elapsed times across rounds. A rising fanfare ends in a sustained four-note chord.</td>
           </tr>
+          <tr>
+            <th scope="row">5<br>Update 2</th>
+            <td class="numeric">423</td><td class="numeric">228</td><td class="numeric">74</td>
+            <td class="numeric">725</td><td class="numeric">+51 / −10</td>
+            <td>Pause and resume mid-round.</td><td>Preserves tile state and uses one pause-adjusted clock for rounds and successful matches.</td>
+          </tr>
       </tbody>
     </table>
   </div>
-  <p class="note">The companion <code>fog-sweep-64-git-diffs.zip</code> contains four ordered patches and replay instructions. Its final patch reproduces the HTML from the fourth saved version. The package copy also uses the full Fog Sweep 64 name in its header.</p>
+  <p class="note">Update 2 SHA-256 for <code>fog-sweep-64.html</code><br><code style="overflow-wrap: anywhere">cc575ed510777a07c5b8019e1ec2f722f76abcb542bb339c4a115a8480261aae</code></p>
+  <p class="note">The companion <code>fog-sweep-64-git-diffs.zip</code> contains four ordered patches and replay instructions for the original saved versions.</p>
 </main>
 </body>
 </html>

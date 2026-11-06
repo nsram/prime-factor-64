@@ -35,6 +35,7 @@
   .masthead {
     min-height: 3.8rem;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: .5rem;
@@ -57,7 +58,7 @@
   }
   .mark i { width: 5px; height: 5px; border-radius: 1px; background: var(--mint); }
   .mark i:nth-child(2), .mark i:nth-child(3) { opacity: .35; }
-  .controls { display: flex; gap: .4rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: .4rem; }
   .control, .next {
     min-height: 44px;
     padding: .4rem .7rem;
@@ -70,6 +71,8 @@
     white-space: nowrap;
   }
   .control[aria-pressed="true"], .next { color: #102923; background: var(--mint); border-color: var(--mint); }
+  .control:disabled { opacity: .55; }
+  #pause { min-width: 4.5rem; }
   main { padding: 1.45rem 0 2.2rem; }
   .eyebrow {
     margin: 0 0 .25rem;
@@ -121,6 +124,8 @@
   }
   .board h2 { margin: 0 0 .42rem; color: var(--mint); font-size: .96rem; letter-spacing: .01em; }
   .board.results h2 { color: var(--gold); }
+  .paused { text-align: center; padding: 1rem; }
+  .paused p { margin: 0; color: var(--muted); }
   .board-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .28rem; }
   .review { max-width: 40rem; margin-inline: auto; }
   .review-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .6rem; }
@@ -221,7 +226,7 @@
     .board { padding: .46rem; }
     .board h2 { margin-bottom: .3rem; }
     main { padding-top: .85rem; }
-    .masthead { min-height: 3.25rem; }
+    .masthead { min-height: 3.25rem; padding-block: .25rem; }
     .lede { margin: .36rem 0 .68rem; font-size: .87rem; }
     .message { min-height: 2.65rem; }
     .stat { padding: .33rem .45rem; }
@@ -238,6 +243,7 @@
     <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span> Fog Sweep 64</div>
     <div class="controls">
       <button class="control" id="sound" type="button" aria-pressed="true">Sound on</button>
+      <button class="control" id="pause" type="button" aria-controls="boards">Pause</button>
       <button class="control" id="restart" type="button">New game</button>
     </div>
   </header>
@@ -264,6 +270,10 @@
         <div class="board-grid" id="results"></div>
       </section>
     </div>
+    <section class="board paused" id="paused-message" role="status" hidden>
+      <h2>Game paused</h2>
+      <p>Resume when you’re ready.</p>
+    </section>
     <section class="board review" id="review" aria-labelledby="review-title" hidden>
       <div class="review-heading">
         <h2 id="review-title" tabindex="-1">Round review</h2>
@@ -278,11 +288,11 @@
           <tbody id="round-scores"></tbody>
           <tfoot id="total-score"></tfoot>
         </table>
-        <p class="review-note">Time runs from the first tap to the last match in each round.</p>
+        <p class="review-note">Round time runs from the first tap to the last match, excluding pauses.</p>
       </div>
       <h3 class="review-subheading" id="final-round-title" hidden></h3>
       <div class="board-grid" id="review-grid"></div>
-      <p class="review-note">Each expression is in its original square. A wrong guess counts against the first tile you tapped. Slow means <span id="slow-seconds">5</span> seconds or more between taps on the successful match.</p>
+      <p class="review-note">Each expression is in its original square. A wrong guess counts against the first tile you tapped. Slow means <span id="slow-seconds">5</span> seconds or more of active play between the two taps of a successful match.</p>
     </section>
   </main>
 </div>
@@ -357,6 +367,8 @@
   const deck = buildDeck();
   const boards = [document.querySelector("#expressions"), document.querySelector("#results")];
   const playBoards = document.querySelector("#boards");
+  const pause = document.querySelector("#pause");
+  const pausedMessage = document.querySelector("#paused-message");
   const roundNumber = document.querySelector("#round-number");
   const clearCount = document.querySelector("#clear-count");
   const firstTry = document.querySelector("#first-try");
@@ -382,6 +394,8 @@
   let selected;
   let selectedAt;
   let roundStartedAt;
+  let pausedAt;
+  let pausedDuration;
   let roundPerformance;
   let roundResults;
   let wrong;
@@ -399,11 +413,11 @@
 
   async function playSound(cue) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!soundOn || !AudioContext) return;
+    if (!soundOn || pausedAt !== null || !AudioContext) return;
     try {
       audio ??= new AudioContext();
       if (audio.state !== "running") await audio.resume();
-      if (!soundOn) return;
+      if (!soundOn || pausedAt !== null) return;
       const start = audio.currentTime + .01;
       const melody = notes[cue];
       const tones = melody.map((pitch, index) => [
@@ -477,16 +491,39 @@
     }
   }
 
+  function updatePauseView() {
+    const paused = pausedAt !== null;
+    pause.textContent = paused ? "Resume" : "Pause";
+    playBoards.hidden = paused;
+    feedback.hidden = paused;
+    pausedMessage.hidden = !paused;
+  }
+
+  function togglePause() {
+    if (pause.disabled) return;
+    const now = performance.now();
+    if (pausedAt === null) {
+      pausedAt = now;
+    } else {
+      pausedDuration += now - pausedAt;
+      pausedAt = null;
+    }
+    updatePauseView();
+  }
+
   function drawRound() {
     roundCleared = 0;
     revealed = initialVisible;
     selected = null;
     roundStartedAt = null;
+    pausedAt = null;
+    pausedDuration = 0;
     wrong = [];
     roundPerformance = new Map();
     review.hidden = true;
     reviewGrid.replaceChildren();
-    playBoards.hidden = false;
+    pause.disabled = false;
+    updatePauseView();
     const round = rounds[roundIndex];
     const opening = new Set(round.slice(0, initialVisible).map(fact => fact.result));
     tiles = boards.map((board, side) => {
@@ -578,13 +615,15 @@
     });
     reviewGrid.replaceChildren(...cards);
     playBoards.hidden = true;
+    pause.disabled = true;
     review.hidden = false;
     reviewTitle.focus();
   }
 
   function pick(tile, keyboard) {
-    if (tile.button.disabled || roundCleared === roundSize) return;
-    const now = performance.now();
+    if (pausedAt !== null || tile.button.disabled || roundCleared === roundSize) return;
+    // Round and tile timing share the same clock with pauses removed.
+    const now = performance.now() - pausedDuration;
     roundStartedAt ??= now;
     for (const button of wrong) button.classList.remove("is-wrong");
     wrong = [];
@@ -654,7 +693,9 @@
   }
 
   document.querySelector("#restart").addEventListener("click", newGame);
+  pause.addEventListener("click", togglePause);
   next.addEventListener("click", () => {
+    if (review.hidden) return;
     if (totalCleared === deck.size) {
       newGame();
     } else {
@@ -671,7 +712,7 @@
     if (soundOn) playSound("select");
   });
   document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && selected) {
+    if (event.key === "Escape" && pausedAt === null && selected) {
       selected.button.setAttribute("aria-pressed", "false");
       selected = null;
       status("Choose any face-up tile.");
