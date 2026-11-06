@@ -28,7 +28,8 @@
   body { margin: 0; min-width: 280px; }
   button { font: inherit; color: inherit; }
   button:not(:disabled) { cursor: pointer; }
-  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, h1:focus-visible, h2:focus-visible {
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible,
+  h1:focus-visible, h2:focus-visible {
     outline: 3px solid #54772a;
     outline-offset: 3px;
   }
@@ -305,6 +306,12 @@
   .review p { margin: 0 0 9px; color: var(--muted); font-size: .85rem; }
   .review ul { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
   .review li { padding: 5px 9px; border-radius: 6px; background: var(--success); font-size: .88rem; font-weight: 650; }
+  .practice-progress { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .practice-progress h2 { margin: 0; font-size: 1rem; }
+  .intro .practice-progress p { margin: 6px 0 10px; font-size: .9rem; }
+  .practice-progress .control-button { white-space: normal; }
+  .practice-progress summary { width: fit-content; padding: 12px 0; cursor: pointer; font-size: .85rem; }
+  .progress-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 
   @media (max-width: 480px) {
     .game-controls { flex-wrap: wrap; gap: 4px; }
@@ -373,6 +380,22 @@
         </select>
       </div>
       <button class="action" id="start" type="button">Start game</button>
+      <section class="practice-progress" aria-labelledby="practice-heading">
+        <h2 id="practice-heading">Practice progress</h2>
+        <p id="practice-summary"></p>
+        <button class="control-button" id="start-practice" type="button" disabled>Practice weak facts</button>
+        <p id="personal-best" hidden></p>
+        <details>
+          <summary>Manage progress</summary>
+          <div class="progress-actions">
+            <button class="control-button" id="export-progress" type="button">Export progress</button>
+            <button class="control-button" id="import-progress" type="button">Import progress</button>
+            <button class="control-button" id="reset-progress" type="button">Reset progress</button>
+            <input id="progress-file" type="file" accept=".json,application/json" hidden>
+          </div>
+        </details>
+        <p id="practice-status" role="status" hidden></p>
+      </section>
     </section>
 
     <section class="play" id="play" aria-label="Matching game" hidden>
@@ -564,6 +587,8 @@
   const segments = document.querySelector("#segments");
   const feedback = document.querySelector("#feedback");
   const board = document.querySelector("#board");
+  const scorebar = document.querySelector(".scorebar");
+  const endButton = document.querySelector("#end-game");
   const pauseButton = document.querySelector("#pause");
   const pausedMessage = document.querySelector("#paused-message");
   const soundButton = document.querySelector("#sound");
@@ -579,6 +604,11 @@
   const recallNext = document.querySelector("#recall-next");
   const recallReveal = document.querySelector("#recall-reveal");
   const recallAnswer = document.querySelector("#recall-answer");
+  const startPracticeButton = document.querySelector("#start-practice");
+  const practiceSummary = document.querySelector("#practice-summary");
+  const practiceStatus = document.querySelector("#practice-status");
+  const personalBest = document.querySelector("#personal-best");
+  const progressFile = document.querySelector("#progress-file");
   const columns = {
     expression: document.querySelector("#expressions"),
     result: document.querySelector("#results")
@@ -608,11 +638,217 @@
 
   let recallCount = 0;
   let recallStartedAt;
-  let recallPairs;
+  let recallPrompts;
   let recallIndex;
   let recallAnswered;
   let recallAttempts;
   let recallCorrect;
+  let practicing = false;
+  let pendingMatches = {};
+
+  const progressKey = "prime-factor-64:practice-progress";
+  const promptOptions = Array.from(deck, ([result, options]) => [
+    { pair: { result, factors: options[0] }, reverse: true },
+    ...options.map(factors => ({ pair: { result, factors }, reverse: false }))
+  ]).flat();
+  const factIds = new Set(promptOptions.flatMap(({ pair, reverse }) => reverse
+    ? [recallId(pair, true)]
+    : [recallId(pair, false), matchId(pair)]));
+  const modeLimits = new Map(Object.keys(boardLayouts).flatMap(size => sessionLengths.flatMap(length =>
+    [0, 2, 4].map(recall => [`${size}:${length}:${recall}`, length])
+  )));
+  let practiceProgress = emptyProgress();
+  let progressStorageAvailable = true;
+  try {
+    practiceProgress = readSavedProgress();
+  } catch {
+    progressStorageAvailable = false;
+  }
+
+  function factorId(pair) {
+    const [a, b] = pair.factors;
+    return Math.min(a, b) + "×" + Math.max(a, b);
+  }
+
+  function matchId(pair) {
+    return "match:" + factorId(pair);
+  }
+
+  function recallId(pair, reverse) {
+    return reverse ? "factors:" + pair.result : "product:" + factorId(pair);
+  }
+
+  function emptyProgress() {
+    return { version: 1, facts: {}, best: {} };
+  }
+
+  function parsePracticeProgress(text) {
+    const data = JSON.parse(text);
+    const object = value => value && typeof value === "object" && !Array.isArray(value);
+    const time = value => Number.isSafeInteger(value) && value >= 0 && value <= 8.64e15;
+    if (data?.version !== 1 || !object(data.facts) || !object(data.best)) throw new Error("Unknown progress format");
+    for (const [id, fact] of Object.entries(data.facts)) {
+      if (!factIds.has(id) || !object(fact) || !time(fact.seen) || !time(fact.missed) || fact.missed > fact.seen ||
+          !Array.isArray(fact.correct) || fact.correct.length > 2 ||
+          !fact.correct.every(at => time(at) && at > fact.missed && at <= fact.seen)) {
+        throw new Error("Invalid fact history");
+      }
+    }
+    for (const [mode, best] of Object.entries(data.best)) {
+      const limit = modeLimits.get(mode);
+      if (!limit || !object(best) || !Number.isInteger(best.firstTry) || best.firstTry < 0 ||
+          best.firstTry > limit || (best.perfectMs !== null && (!time(best.perfectMs) || best.firstTry !== limit))) {
+        throw new Error("Invalid personal best");
+      }
+    }
+    return data;
+  }
+
+  function readSavedProgress() {
+    const saved = localStorage.getItem(progressKey);
+    return saved === null ? emptyProgress() : parsePracticeProgress(saved);
+  }
+
+  function distinctDays(times, after) {
+    const days = new Map();
+    for (const at of times.sort((a, b) => a - b)) {
+      if (at > after) days.set(new Date(at).toDateString(), at);
+    }
+    return Array.from(days.values()).slice(-2);
+  }
+
+  function mergePracticeProgress(base, changes) {
+    for (const [id, fact] of Object.entries(changes.facts)) {
+      const previous = base.facts[id];
+      const missed = Math.max(previous?.missed ?? 0, fact.missed);
+      base.facts[id] = {
+        seen: Math.max(previous?.seen ?? 0, fact.seen),
+        missed,
+        correct: distinctDays([...(previous?.correct ?? []), ...fact.correct], missed)
+      };
+    }
+    for (const [mode, best] of Object.entries(changes.best)) {
+      const previous = base.best[mode];
+      const perfectMs = Math.min(previous?.perfectMs ?? Infinity, best.perfectMs ?? Infinity);
+      base.best[mode] = {
+        firstTry: Math.max(previous?.firstTry ?? 0, best.firstTry),
+        perfectMs: Number.isFinite(perfectMs) ? perfectMs : null
+      };
+    }
+  }
+
+  function savePracticeProgress(changes) {
+    try {
+      const saved = readSavedProgress();
+      if (!progressStorageAvailable) mergePracticeProgress(saved, practiceProgress);
+      mergePracticeProgress(saved, changes);
+      localStorage.setItem(progressKey, JSON.stringify(saved));
+      practiceProgress = saved;
+      progressStorageAvailable = true;
+    } catch {
+      mergePracticeProgress(practiceProgress, changes);
+      progressStorageAvailable = false;
+    }
+  }
+
+  function observation(correct) {
+    const now = Date.now();
+    return { seen: now, missed: correct ? 0 : now, correct: correct ? [now] : [] };
+  }
+
+  function modeKey() {
+    return boardSize + ":" + sessionMatches + ":" + recallCount;
+  }
+
+  function saveMatchingProgress(best = null) {
+    if (!Object.keys(pendingMatches).length && !best) return;
+    const changes = emptyProgress();
+    changes.facts = pendingMatches;
+    if (best) changes.best[modeKey()] = best;
+    savePracticeProgress(changes);
+    pendingMatches = {};
+  }
+
+  function practiceCandidates() {
+    return promptOptions.map(prompt => {
+      const { pair, reverse } = prompt;
+      const recallHistory = practiceProgress.facts[recallId(pair, reverse)];
+      const matchHistory = reverse ? null : practiceProgress.facts[matchId(pair)];
+      const missed = Math.max(recallHistory?.missed ?? 0, matchHistory?.missed ?? 0);
+      const correct = (recallHistory?.correct ?? []).filter(at => at > missed);
+      return {
+        ...prompt,
+        weak: missed > 0 && correct.length < 2,
+        missed,
+        seen: Math.max(recallHistory?.seen ?? 0, matchHistory?.seen ?? 0)
+      };
+    });
+  }
+
+  function updatePersonalBest() {
+    const best = practiceProgress.best[modeKey()];
+    personalBest.hidden = !best;
+    if (best) {
+      personalBest.textContent = "Best for these settings: " + best.firstTry + "/" + sessionMatches + " first try." +
+        (best.perfectMs === null ? "" : " Fastest perfect matching run: " + formatTime(best.perfectMs) + ".");
+    }
+  }
+
+  function updatePracticeHome() {
+    const count = practiceCandidates().filter(prompt => prompt.weak).length;
+    practiceSummary.textContent = count
+      ? count + (count === 1 ? " prompt to revisit." : " prompts to revisit.")
+      : "Missed facts will appear here for untimed practice.";
+    if (!progressStorageAvailable) practiceSummary.textContent += " Progress is in this tab. Export a copy to keep it.";
+    startPracticeButton.disabled = count === 0;
+    updatePersonalBest();
+  }
+
+  function showPracticeStatus(message) {
+    practiceStatus.hidden = false;
+    practiceStatus.textContent = message;
+  }
+
+  function exportPracticeProgress() {
+    const file = new Blob([JSON.stringify(practiceProgress, null, 2) + "\n"], { type: "application/json" });
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "prime-factor-64-progress.json";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function importPracticeProgress() {
+    const file = progressFile.files[0];
+    progressFile.value = "";
+    if (!file) return;
+    try {
+      if (file.size > 256_000) throw new Error("Progress file is too large");
+      const incoming = parsePracticeProgress(await file.text());
+      savePracticeProgress(incoming);
+      updatePracticeHome();
+      showPracticeStatus("Progress merged.");
+    } catch {
+      showPracticeStatus("Choose a valid Prime Factor 64 progress file.");
+    }
+  }
+
+  function resetPracticeProgress() {
+    if (!window.confirm("Reset your saved practice progress and personal bests?")) return;
+    try {
+      localStorage.removeItem(progressKey);
+      progressStorageAvailable = true;
+    } catch {
+      if (progressStorageAvailable) {
+        showPracticeStatus("Browser storage could not be reset.");
+        return;
+      }
+    }
+    practiceProgress = emptyProgress();
+    updatePracticeHome();
+    showPracticeStatus(progressStorageAvailable ? "Progress reset." : "Progress reset in this tab.");
+  }
 
   const soundPreferenceKey = "prime-match-55:sound";
   const notesByCue = {
@@ -660,6 +896,7 @@
     if (size === boardSize) return;
     boardSize = size;
     updateSizeControls();
+    updatePersonalBest();
   }
 
   function setSessionMatches(value) {
@@ -667,6 +904,7 @@
     if (matches === sessionMatches) return;
     sessionMatches = matches;
     for (const select of boardCountOptions) select.value = value;
+    updatePersonalBest();
   }
 
   function setRecallCount(value) {
@@ -674,6 +912,7 @@
     if (count === recallCount) return;
     recallCount = count;
     for (const option of recallOptions) option.value = value;
+    updatePersonalBest();
   }
 
   function updateSoundControl() {
@@ -778,6 +1017,10 @@
     const paused = pausedAt !== null;
     const recalling = recallStartedAt !== null;
     pauseButton.textContent = paused ? "Resume" : "Pause";
+    pauseButton.hidden = practicing;
+    scorebar.hidden = practicing;
+    segments.hidden = practicing;
+    endButton.textContent = practicing ? "End practice" : "End game";
     board.hidden = paused || recalling;
     feedback.hidden = paused || recalling;
     recall.hidden = paused || !recalling;
@@ -786,6 +1029,7 @@
   }
 
   function togglePause() {
+    if (practicing) return;
     const now = performance.now();
     if (pausedAt === null) {
       pausedAt = now;
@@ -887,9 +1131,11 @@
     const first = selected;
     markSelected(first, false);
     selected = null;
+    const correct = first.pair.result === card.pair.result;
+    if (!attempted.has(first.pair)) pendingMatches[matchId(first.pair)] = observation(correct);
     attempted.add(first.pair);
 
-    if (first.pair.result !== card.pair.result) {
+    if (!correct) {
       missed.add(first.pair);
       wrongCards = [first.button, card.button];
       for (const button of wrongCards) button.classList.add("wrong");
@@ -910,12 +1156,14 @@
       advanceSide = first.side;
       if (recallCount > 0) {
         beginRecall();
+        saveMatchingProgress();
         playCue("board");
       } else if (matched === total) {
         endGame();
       } else {
         showFeedback("Board complete!", "correct");
         scheduleBoardAdvance(300);
+        saveMatchingProgress();
         playCue("board");
       }
     } else {
@@ -931,9 +1179,9 @@
     recallStartedAt = performance.now();
     window.clearInterval(timer);
     tickClock();
-    recallPairs = shuffle(boards[boardIndex]).sort((a, b) =>
+    recallPrompts = shuffle(boards[boardIndex]).sort((a, b) =>
       Number(missed.has(b)) - Number(missed.has(a)) || matchDurations.get(b) - matchDurations.get(a)
-    ).slice(0, recallCount);
+    ).slice(0, recallCount).map((pair, index) => ({ pair, reverse: index % 2 === 1 }));
     recallIndex = 0;
     updateGameView();
     window.scrollTo(0, 0);
@@ -941,12 +1189,11 @@
   }
 
   function drawRecall() {
-    const pair = recallPairs[recallIndex];
-    const reverse = recallIndex % 2 === 1;
+    const { pair, reverse } = recallPrompts[recallIndex];
     recallAnswered = false;
     recallForm.reset();
     document.querySelector("#recall-step").textContent =
-      "Recall " + (recallIndex + 1) + " of " + recallPairs.length + " · Untimed";
+      (practicing ? "Practice " : "Recall ") + (recallIndex + 1) + " of " + recallPrompts.length + " · Untimed";
     recallTitle.textContent = reverse ? pair.result + " = ? × ?" : pair.factors.join(" × ") + " = ?";
     document.querySelector("#recall-instruction").textContent =
       reverse ? "Enter the two factors in either order." : "Enter the exact product.";
@@ -964,14 +1211,14 @@
 
   function answerRecall(reveal = false) {
     if (pausedAt !== null || recallStartedAt === null || recallAnswered) return;
-    const pair = recallPairs[recallIndex];
+    const { pair, reverse } = recallPrompts[recallIndex];
     const equation = pair.factors.join(" × ") + " = " + pair.result;
     let message = "The match is " + equation + ".";
+    let correct = false;
     if (!reveal) {
-      const reverse = recallIndex % 2 === 1;
       const first = Number(recallFirst.value);
       const second = Number(recallSecond.value);
-      const correct = reverse ?
+      correct = reverse ?
         deck.get(pair.result).some(([a, b]) => a === Math.min(first, second) && b === Math.max(first, second)) :
         first === pair.result;
       const enteredEquation = reverse ? first + " × " + second + " = " + (first * second) : equation;
@@ -982,16 +1229,20 @@
       } else if (reverse) {
         message = "Your factors give " + enteredEquation + ".\n" + message;
       }
-      playCue(correct ? "recall" + (recallIndex + 1) : "miss");
+      playCue(correct ? "recall" + (recallIndex % 4 + 1) : "miss");
     }
 
+    const changes = emptyProgress();
+    changes.facts[recallId(pair, reverse)] = observation(correct);
+    savePracticeProgress(changes);
     recallAnswered = true;
     recallAnswer.textContent = message;
     recallFirst.disabled = true;
     recallSecond.disabled = true;
     recallReveal.hidden = true;
     recallNext.textContent =
-      recallIndex + 1 < recallPairs.length ? "Next prompt" : matched === total ? "See score" : "Next board";
+      recallIndex + 1 < recallPrompts.length ? "Next prompt" :
+      practicing ? "Finish practice" : matched === total ? "See score" : "Next board";
     recallNext.focus({ preventScroll: true });
   }
 
@@ -1000,9 +1251,11 @@
     if (pausedAt !== null || recallStartedAt === null) return;
     if (!recallAnswered) {
       answerRecall();
-    } else if (recallIndex + 1 < recallPairs.length) {
+    } else if (recallIndex + 1 < recallPrompts.length) {
       recallIndex++;
       drawRecall();
+    } else if (practicing) {
+      finishPractice();
     } else if (matched === total) {
       endGame();
     } else {
@@ -1015,6 +1268,42 @@
     }
   }
 
+  function startPractice() {
+    const candidates = practiceCandidates().filter(prompt => prompt.seen);
+    if (!candidates.some(prompt => prompt.weak)) return;
+    candidates.sort((a, b) => Number(b.weak) - Number(a.weak) ||
+      (a.weak ? b.missed - a.missed : a.seen - b.seen));
+    const results = new Set();
+    recallPrompts = [];
+    for (const prompt of candidates) {
+      if (results.has(prompt.pair.result)) continue;
+      results.add(prompt.pair.result);
+      recallPrompts.push(prompt);
+      if (recallPrompts.length === 8) break;
+    }
+    practicing = true;
+    pausedAt = null;
+    recallStartedAt = performance.now();
+    recallIndex = 0;
+    recallAttempts = 0;
+    recallCorrect = 0;
+    practiceStatus.hidden = true;
+    intro.hidden = true;
+    finish.hidden = true;
+    play.hidden = false;
+    updateGameView();
+    window.scrollTo(0, 0);
+    drawRecall();
+    prepareAudio();
+  }
+
+  function finishPractice() {
+    showHome();
+    showPracticeStatus(recallAttempts
+      ? "Practice finished. " + recallCorrect + "/" + recallAttempts + " correct."
+      : "Practice finished. No answers submitted.");
+  }
+
   function startGame(event) {
     const settings = event.currentTarget.closest(".panel");
     setSessionMatches(settings.querySelector(".board-count-option").value);
@@ -1025,6 +1314,8 @@
     board.dataset.size = String(boardSize);
     boardIndex = 0;
     matched = 0;
+    practicing = false;
+    pendingMatches = {};
     attempted = new Set();
     missed = new Set();
     selected = null;
@@ -1032,6 +1323,7 @@
     recallStartedAt = null;
     recallAttempts = 0;
     recallCorrect = 0;
+    practiceStatus.hidden = true;
     intro.hidden = true;
     finish.hidden = true;
     play.hidden = false;
@@ -1052,11 +1344,18 @@
   function returnHome(event) {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     event.preventDefault();
+    showHome();
+  }
+
+  function showHome() {
     stopGameTimers();
     if (soundOutput) soundOutput.gain.value = 0;
+    saveMatchingProgress();
+    practicing = false;
     play.hidden = true;
     finish.hidden = true;
     intro.hidden = false;
+    updatePracticeHome();
     window.scrollTo(0, 0);
     document.querySelector("#intro-title").focus({ preventScroll: true });
   }
@@ -1068,13 +1367,17 @@
     finish.hidden = false;
     const finishTitle = document.querySelector("#finish-title");
     const attempts = attempted.size;
+    const firstTry = attempts - missed.size;
+    saveMatchingProgress(completed
+      ? { firstTry, perfectMs: firstTry === total ? Math.round(elapsed) : null }
+      : null);
     document.querySelector("#finish-label").textContent = completed ? "Game complete" : "Game ended";
     finishTitle.textContent = completed ? "All " + total + " matched." : "Your score so far.";
     document.querySelector("#finish-summary").textContent =
       attempts === 0 ? "No pairs attempted yet." : attempts + (attempts === 1 ? " pair attempted." : " pairs attempted.");
     document.querySelector("#final-matches").textContent = matched + "/" + total;
     document.querySelector("#final-time").textContent = formatTime(elapsed);
-    document.querySelector("#final-accuracy").textContent = attempts ? (attempts - missed.size) + "/" + attempts : "—";
+    document.querySelector("#final-accuracy").textContent = attempts ? firstTry + "/" + attempts : "—";
     document.querySelector("#finish-stats").dataset.recall = String(recallCount > 0);
     document.querySelector("#recall-stat").hidden = recallCount === 0;
     document.querySelector("#final-recall").textContent = recallAttempts ? recallCorrect + "/" + recallAttempts : "—";
@@ -1093,6 +1396,7 @@
 
   updateSoundControl();
   updateSizeControls();
+  updatePracticeHome();
   for (const option of sizeOptions) {
     option.addEventListener("change", () => setBoardSize(option.value));
   }
@@ -1105,9 +1409,14 @@
   }
   document.querySelector("#home").addEventListener("click", returnHome);
   document.querySelector("#start").addEventListener("click", startGame);
+  startPracticeButton.addEventListener("click", startPractice);
+  document.querySelector("#export-progress").addEventListener("click", exportPracticeProgress);
+  document.querySelector("#import-progress").addEventListener("click", () => progressFile.click());
+  document.querySelector("#reset-progress").addEventListener("click", resetPracticeProgress);
+  progressFile.addEventListener("change", importPracticeProgress);
   soundButton.addEventListener("click", toggleSound);
   pauseButton.addEventListener("click", togglePause);
-  document.querySelector("#end-game").addEventListener("click", () => endGame(false));
+  endButton.addEventListener("click", () => practicing ? finishPractice() : endGame(false));
   recallForm.addEventListener("submit", submitRecall);
   recallReveal.addEventListener("click", () => answerRecall(true));
   document.querySelector("#replay").addEventListener("click", startGame);

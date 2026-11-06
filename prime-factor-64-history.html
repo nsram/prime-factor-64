@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f4ed">
-  <meta name="description" content="How the Prime Factor 64 game evolved over 20 saved versions.">
+  <meta name="description" content="How Prime Factor 64 evolved from a multiplication table to matching, recall, and practice across sessions.">
   <title>How We Built Prime Factor 64</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -30,7 +30,7 @@
     <nav class="toc" aria-label="On this page">
       <details open>
         <summary>On this page</summary>
-        <ul><li><a href="#the-seven-primes">The seven primes</a></li><li><a href="#two-squares-that-needed-a-cue">Two squares that needed a cue</a></li><li><a href="#from-39-products-to-55-results">From 39 products to 55 results</a></li><li><a href="#playing-the-first-game">Playing the first game</a></li><li><a href="#board-sizes-and-the-move-to-60">Board sizes and the move to 60</a></li><li><a href="#the-final-deck-and-session-controls">The final deck and session controls</a></li><li><a href="#the-final-playtest-and-polish">The final playtest and polish</a></li><li><a href="#ui-history-from-the-first-release">UI history from the first release</a></li><li><a href="#ui-history-through-the-final-edit">UI history through the final edit</a></li><li><a href="#how-the-name-was-chosen">How the name was chosen</a></li><li><a href="#other-paths-we-considered">Other paths we considered</a></li><li><a href="#the-64-results-in-the-final-deck">The 64 results in the final deck</a></li><li><a href="#technical-version-log">Technical version log</a></li></ul>
+        <ul><li><a href="#the-seven-primes">The seven primes</a></li><li><a href="#two-squares-that-needed-a-cue">Two squares that needed a cue</a></li><li><a href="#from-39-products-to-55-results">From 39 products to 55 results</a></li><li><a href="#playing-the-first-game">Playing the first game</a></li><li><a href="#board-sizes-and-the-move-to-60">Board sizes and the move to 60</a></li><li><a href="#the-final-deck-and-session-controls">The final deck and session controls</a></li><li><a href="#the-final-playtest-and-polish">Polishing the original release</a></li><li><a href="#practice-across-sessions">Practice across sessions</a></li><li><a href="#ui-history-from-the-first-release">UI history from the first release</a></li><li><a href="#ui-history-through-the-final-edit">UI history from 60 results to saved practice</a></li><li><a href="#how-the-name-was-chosen">How the name was chosen</a></li><li><a href="#other-paths-we-considered">Other paths we considered</a></li><li><a href="#the-64-results-in-the-final-deck">The 64 results in the final deck</a></li><li><a href="#technical-version-log">Technical version log</a></li></ul>
       </details>
     </nav>
     <article class="doc-body">
@@ -149,21 +149,26 @@
 </table>
 </div>
 <p class="note">A fresh page starts with 4 pairs per board, 4 boards, and recall Off. The latest choices carry through Home and Play again until reload. Sound has its own saved preference.</p>
-<h2 id="the-final-playtest-and-polish">The final playtest and polish</h2>
+<h2 id="the-final-playtest-and-polish">Polishing the original release</h2>
 <h3 id="make-factor-feedback-explain-the-guess">Make factor feedback explain the guess</h3>
 <p>Sriram checked whether recall had sound. ChatGPT verified that correct answers play their own position-based chimes with Sound on, an incorrect answer plays the low cue, and Show answer is silent. Sriram then asked the game to multiply the two numbers he entered so he could see what his factors implied. He also asked the home page to state the factor limit. It now says every factor is 19 or less, except for 21 in 21 × 17.</p>
 <p>Correct factor submissions now show the entered equation in the player’s order. For a miss, the app shows both the entered product and the target equation.</p>
 <h3 id="give-the-finish-its-own-sound">Give the finish its own sound</h3>
 <p>Sriram reported that the completion sound was missing in a four-board game and asked for a spectacular one. The existing cue was a brief three-note arpeggio close in character to the board-clear chime. ChatGPT replaced it with six rising notes, a sustained C-major chord, and a high flourish. The completion screen now triggers the fanfare from one shared path, including after audio resumes if the browser suspended it. With recall enabled, it plays when the player selects See score.</p>
 <p>ChatGPT played the default four-board game to 16/16 in the browser. Programmatic checks covered the cue with recall off, with two checks, and with four, plus the 64-match finish, audio resumption, mute, and early exit. The original device-specific cause of the missing sound remained unconfirmed.</p>
-<h3 id="two-lines-for-the-final-edit">Two lines for the final edit</h3>
-<p>Sriram’s final request was to put the two sentences on separate lines. The tested feedback reads as follows.</p>
+<h3 id="two-lines-for-the-final-edit">Two lines for factor feedback</h3>
+<p>Sriram asked for the two sentences to appear on separate lines. The tested feedback reads as follows.</p>
 <blockquote><p><em>Your factors give 13 × 18 = 234.<br>The match is 13 × 17 = 221.</em></p></blockquote>
 <h3 id="what-each-collaborator-contributed">What each collaborator contributed</h3>
 <p>Sriram was the learner, product designer, and playtester. His observations supplied requirements that only surfaced when the game was in use. ChatGPT made the proposals testable by enumerating the arithmetic, designing the board deals, and turning feedback into revised versions. The same process handled changes at very different scales, from the number of facts in the deck to the line break that made one answer easier to read.</p>
+<h2 id="practice-across-sessions">Practice across sessions</h2>
+<p>Muse’s review pointed to a gap between sessions. The game showed which facts needed work, and Sriram approved a follow-up that would bring those facts back on a later visit.</p>
+<p><strong>Practice weak facts</strong> offers up to eight untimed prompts. A missed match can return as a product question, while a missed recall question returns in its original direction. Two unaided correct answers on different days retire a prompt from the weak list. For example, the app tracks 6 × 18 and 9 × 12 separately when asking for the product. When it asks for factors of 108, either pair counts.</p>
+<p>Practice history is saved in the browser. <strong>Manage progress</strong> can export, merge, or reset it. Completed matching runs record first-try bests and fastest perfect matching times for each combination of board size, session length, and recall setting.</p>
+<p>Chromium checks covered reopening after a miss, retiring a prompt across two dates, exporting and restoring a backup, and completing games with recall off, two, or four. The checks also exercised scoring, pause and resume, and the completion cue.</p>
 <p class="note"><a href="prime-factor-64.html">Play Prime Factor 64</a>   ·   <a href="prime-factor-64.html" download="prime-factor-64.html">Open the standalone HTML</a></p>
 <h2 id="ui-history-from-the-first-release">UI history from the first release</h2>
-<p>The release log follows the saved game versions in order. It includes changes to the screen, to what the player hears, and to what the same controls do from one version to the next.</p>
+<p>The log follows the original saved versions and the practice-progress update. It records changes to the screen, sounds, and controls.</p>
 <div class="table-scroll" role="region" tabindex="0" aria-label="UI history from the first release table">
 <table>
   <thead>
@@ -184,8 +189,8 @@
 </table>
 </div>
 <p class="note">The original board already distinguished selected, wrong, and matched cards with lime, red, and pale green states. It also provided text hints, keyboard focus, and reduced-motion support.</p>
-<h2 id="ui-history-through-the-final-edit">UI history through the final edit</h2>
-<div class="table-scroll" role="region" tabindex="0" aria-label="UI history through the final edit table">
+<h2 id="ui-history-through-the-final-edit">UI history from 60 results to saved practice</h2>
+<div class="table-scroll" role="region" tabindex="0" aria-label="UI history from 60 results to saved practice">
 <table>
   <thead>
     <tr><th scope="col"><strong>Release step</strong></th><th scope="col"><strong>What changed for the player</strong></th></tr>
@@ -201,6 +206,7 @@
     <tr><td>18  Explain a factor guess</td><td>The home page named 21 in 21 × 17 as the factor-limit exception. Recall showed the product of the submitted factors, then gave the target equation when they missed. A correct submission showed the factors in the order entered.</td></tr>
     <tr><td>19  Victory fanfare</td><td>A six-note climb, sustained chord, and high flourish replaced the short finish cue. It played on completion, or on See score after the last recall check. The same finish path applied to short and full sessions.</td></tr>
     <tr><td>20  Two lines of feedback</td><td>A wrong factor answer put the entered equation on the first line and the target equation on the second. A correct answer or Show answer continued to display a single message.</td></tr>
+    <tr><td>21  Practice progress</td><td>The home screen gained Practice weak facts, personal bests for the selected settings, and controls to export, import, or reset progress.</td></tr>
   </tbody>
 </table>
 </div>
@@ -272,10 +278,10 @@
 <p class="note">The additional factor pairs are 9 × 12 for 108, 8 × 14 for 112, 9 × 14 for 126, and 9 × 16 for 144.</p>
 <p>The final four-pair layout uses two shared-ending pairs on 14 boards and a triple plus a singleton on two. In the eight- and sixteen-pair layouts, every ending used on a board has at least two cards.</p>
 <h3 id="project-record">Project record</h3>
-<p>This chronology follows the project conversation from the first multiplication table through the final factor-recall edit. The saved Prime Match 55, Prime Match 60, and Prime Factor 64 versions record the implementation changes. The counts and equations were checked against the deck rules. The final game and its standalone source are linked at the end of the main narrative.</p>
+<p>This chronology follows the project conversation from the first multiplication table through practice across sessions. The original 20 saved versions cover Prime Match 55, Prime Match 60, and Prime Factor 64. Entry 21 records the practice-progress package. The counts and equations were checked against the deck rules.</p>
 <h2 id="technical-version-log">Technical version log</h2>
-<p>Each row corresponds to a saved version of the game, in release order. The first number matches the UI history. The short commit ID identifies the source used for each count.</p>
-<p class="note">LOC counts physical lines, including blanks and comments, in the saved index.html. CSS and JS count the lines inside the style and script tags. HTML counts the remaining lines, including those tags. Total is the sum of all three.</p>
+<p>Each number matches the UI history. Entries 01–20 cite the original saved commits. Entry 21 identifies the game file in this package, based on GitHub commit <code>fa804dd</code>.</p>
+<p class="note">LOC counts physical lines, including blanks and comments, in the original <code>index.html</code> snapshots and the current <code>prime-factor-64.html</code>. CSS and JS count the lines inside the style and script tags. HTML counts the remaining lines, including those tags. Total is the sum of all three.</p>
 <div class="table-scroll" role="region" tabindex="0" aria-label="Technical version log table">
 <table class="wide-table">
   <thead>
@@ -302,9 +308,11 @@
     <tr><td class="numeric">18<br>fae08c1</td><td class="numeric">156</td><td class="numeric">307</td><td class="numeric">627</td><td class="numeric">1090</td><td>Show the entered product</td><td>Multiplied the two submitted factors for feedback and kept the correct equation available after a miss.</td></tr>
     <tr><td class="numeric">19<br>45d71e4</td><td class="numeric">156</td><td class="numeric">307</td><td class="numeric">643</td><td class="numeric">1106</td><td>Victory fanfare</td><td>Centralized the completion trigger. Scheduled overlapping notes and waited for audio to resume when needed.</td></tr>
     <tr><td class="numeric">20<br>6b97255</td><td class="numeric">156</td><td class="numeric">307</td><td class="numeric">643</td><td class="numeric">1106</td><td>Two-line factor feedback</td><td>Inserted a newline and used CSS pre-line spacing to preserve it inside the status message.</td></tr>
+    <tr><td class="numeric">21<br>Package</td><td class="numeric">172</td><td class="numeric">324</td><td class="numeric">929</td><td class="numeric">1425</td><td>Practice progress</td><td>Stored versioned first-attempt history by prompt type, reused the recall screen for the untimed drill, and merged JSON backups by fact and session settings.</td></tr>
   </tbody>
 </table>
 </div>
+<p class="note">Entry 21 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">7d24edba93c0e140a282766455a8a4d71dd68fa914c525baab6146a70923d7a1</code></p>
       <p class="back"><a href="index.html">Back to project home</a></p>
     </article>
   </div>

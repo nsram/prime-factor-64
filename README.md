@@ -5,14 +5,20 @@ Open `index.html` to choose Prime Factor 64, Fog Sweep 64, or the learning guide
 | File | Contents |
 | --- | --- |
 | `index.html` | Project home |
-| `prime-factor-64.html` | Prime Factor 64 with timed matching and recall checks |
+| `prime-factor-64.html` | Timed matching, recall checks, and saved practice progress |
 | `fog-sweep-64.html` | Fog Sweep 64 with two checkerboards, hidden tiles, and round reviews |
 | `learning-guide.html` | Mental-math guide, worked examples, recall drill, and answer key |
-| `prime-factor-64-history.html` | Case study, UI history, alternatives, and technical version log |
+| `prime-factor-64-history.html` | Case study, UI and technical history through the practice-progress update |
 | `fog-sweep-64-history.html` | Fog Sweep 64 design history and four-version technical log |
 | `styles.css` | Shared styling for the home page, learning guide, and original case study |
 
 The separate `fog-sweep-64-git-diffs.zip` archive contains replayable patches for the four Fog Sweep 64 source versions.
+
+## Practice progress
+
+Prime Factor 64 remembers first-attempt results and shows **Practice weak facts** after a miss or a revealed answer. The untimed drill offers up to eight prompts. Two unaided correct answers on different days retire a missed prompt. Completed matching games earn personal bests for their selected settings.
+
+Progress is saved in the browser. Use **Manage progress** to export a JSON backup, merge one from another device or offline copy, or reset practice history and bests.
 
 ## Push to GitHub
 
