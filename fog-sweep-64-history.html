@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The design decisions, playtest feedback and four source versions of Fog Sweep 64.">
+<title>How We Built Fog Sweep 64</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #202a24;
+    --forest: #173d30;
+    --line: #d4dbcf;
+    --muted: #506056;
+    font: 1rem/1.6 system-ui, sans-serif;
+    color: var(--ink);
+    background: #f5f4ed;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  main { width: min(100% - 2rem, 64rem); margin: auto; padding: clamp(2rem, 6vw, 4rem) 0; }
+  header { padding: clamp(1.25rem, 5vw, 3rem); border-radius: 1rem; background: var(--forest); color: #fffefa; }
+  h1 { margin: .1em 0 .3em; font-size: clamp(2.1rem, 7vw, 4rem); line-height: 1.04; letter-spacing: -.04em; }
+  h2 { margin: 1.65em 0 .45em; color: var(--forest); line-height: 1.2; }
+  p { max-width: 76ch; margin: 0 0 .9em; }
+  .eyebrow { color: #dcf3a8; font-size: .78rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+  .meta { margin: 0; color: #e3ece1; font-size: .88rem; }
+  .note { color: var(--muted); font-size: .9rem; }
+  a { color: var(--forest); text-underline-offset: .2em; }
+  .links { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin: 0 0 1rem; }
+  .links [aria-current="page"] { font-weight: 700; }
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: .55rem; background: #fffefa; }
+  table { width: 100%; min-width: 51rem; border-collapse: collapse; font-size: .88rem; line-height: 1.45; }
+  th, td { padding: .55rem .65rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  thead { background: #e6eee5; color: var(--forest); }
+  tbody tr:last-child > * { border-bottom: 0; }
+  .numeric { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  @media print {
+    :root, header { background: white; color: black; }
+    .eyebrow, .meta { color: #333; }
+    main { width: 100%; padding: 0; }
+    .links { display: none; }
+    table { min-width: 0; }
+    tr { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <nav class="links" aria-label="Project navigation"><a href="index.html">Home</a><a href="prime-factor-64.html">Prime Factor 64</a><a href="fog-sweep-64.html">Fog Sweep 64</a><a href="learning-guide.html">Learning guide</a><a href="prime-factor-64-history.html">Prime Factor 64 history</a><a href="fog-sweep-64-history.html" aria-current="page">Fog Sweep 64 history</a></nav>
+  <header>
+    <p class="eyebrow">Project history</p>
+    <h1>How We Built Fog Sweep 64</h1>
+    <p>A second way to practice the Prime Factor 64 facts</p>
+    <p class="meta">Sriram Natarajan and ChatGPT · November 6, 2026</p>
+  </header>
+
+  <h2>From a matching exercise to a game of discovery</h2>
+  <p>Prime Factor 64 began as a way to memorize difficult three-digit products in both directions. In the original game, Sriram noticed that a rough estimate and a distinctive last digit could make matching easier. That led to grouping products with shared endings. After building the original game and its guide, he wanted a separate, more playful version using the same 64 results.</p>
+  <p>Sriram proposed two chessboards, one with expressions and one with results. Touching a correct pair could make it disappear. He also floated a Minesweeper-like idea where a move would change what the player could see. The prototype, <em>Sweep the Fog</em>, combined the two boards with progressive reveals. It used correct matches to uncover tiles and skipped mines and guessing at covered squares.</p>
+
+  <h2>How the fog lifts</h2>
+  <p>Each game has four rounds of 16 pairs. The expression and result tiles are shuffled separately on two 4 × 4 boards. Eight pairs are face up at the start of each round. A correct match clears both tiles, and every two matches reveal two more pairs until all eight hidden pairs have been uncovered. The player can start a match on either board.</p>
+  <p>The deal groups products by their final digit. The opening draws from pairs and triples with shared endings, and each later reveal adds two products that end in the same digit. This makes the last digit less useful when the tiles first appear. The final unmatched pair still becomes obvious, a trade-off Sriram had accepted in the original matching game.</p>
+  <p>Each result appears once per game. When a product has two factor pairs, the game randomly chooses one. It also randomizes the order of the two factors. The package reuses the same deck as the original game and learning guide.</p>
+
+  <h2>What the round review added</h2>
+  <p>Sriram asked to reveal the completed board with each expression and result together, in the expression’s original square. Color and labels distinguish first tries, retries and slow matches. A wrong attempt counts against the first tile tapped. The tile time is the gap between the two taps of the successful match. Five seconds or more earns a Slow label, and a tile can show both Retry and Slow.</p>
+  <p>He also asked for a score in place of Covered per board. Version 2 removed the counter and called its replacement Round first try. When Sriram reported still seeing the old counter, version 3 made the intended label explicit as First-try score. The archived version 3 diff is a single line, since version 2 already contained the scoring behavior. The live score uses the number of distinct facts attempted so far in the round as its denominator.</p>
+
+  <h2>The finish and the name</h2>
+  <p><em>Sweep the Fog</em> was the trial name. Sriram initially suggested <em>Sweep Factor 64</em> for the finished game and later chose <em>Fog Sweep 64</em>. He asked for a final fanfare, the total score and time, and a breakdown by round. He confirmed that rounds should have a completion cue and that sound should start on.</p>
+  <p>Rounds 1–3 end with a short chime. The last round ends with a longer rising fanfare and a sustained chord. The player can mute audio from the header. The final screen gives the first-try score out of 64 and the sum of all four round times, alongside the score and time for each round. Each round’s timer runs from the first tap to the last match, so time between rounds and on the review screens is excluded.</p>
+
+  <h2>Technical version log</h2>
+  <p class="note">Counts come from the saved <code>dist/index.html</code> at each Git commit. Blank lines count. CSS and JavaScript count lines inside their tags. HTML counts the remaining lines, including the tags. Changes are additions and deletions to this file from the preceding version.</p>
+  <div class="table-scroll" role="region" aria-label="Technical version log" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Version</th><th scope="col">JS LOC</th><th scope="col">CSS LOC</th><th scope="col">HTML LOC</th><th scope="col">Total LOC</th><th scope="col">Diff</th><th scope="col">Feature change</th><th scope="col">Implementation</th></tr></thead>
+      <tbody>
+          <tr>
+            <th scope="row">1<br><code>6518476</code></th>
+            <td class="numeric">277</td><td class="numeric">182</td><td class="numeric">50</td>
+            <td class="numeric">509</td><td class="numeric">+509 / −0</td>
+            <td>Two shuffled 4 × 4 boards, staged reveals, sound toggle and a covered-tile counter.</td><td>Groups products by final digit and deals matching reveal waves to both boards.</td>
+          </tr>
+          <tr>
+            <th scope="row">2<br><code>ed683e7</code></th>
+            <td class="numeric">327</td><td class="numeric">206</td><td class="numeric">57</td>
+            <td class="numeric">590</td><td class="numeric">+91 / −10</td>
+            <td>Replaces Covered per board with Round first try and adds a color-coded review after every round.</td><td>Tracks a retry and successful tap-to-tap time per result. Reviews preserve expression positions.</td>
+          </tr>
+          <tr>
+            <th scope="row">3<br><code>a833c4f</code></th>
+            <td class="numeric">327</td><td class="numeric">206</td><td class="numeric">57</td>
+            <td class="numeric">590</td><td class="numeric">+1 / −1</td>
+            <td>Renames Round first try to First-try score.</td><td>One HTML line replaced. Scoring logic carries over from version 2.</td>
+          </tr>
+          <tr>
+            <th scope="row">4<br><code>7030ad4</code></th>
+            <td class="numeric">392</td><td class="numeric">223</td><td class="numeric">69</td>
+            <td class="numeric">684</td><td class="numeric">+109 / −15</td>
+            <td>Renames the game, turns sound on by default and adds the final score and time breakdown.</td><td>Accumulates scores and elapsed times across rounds. A rising fanfare ends in a sustained four-note chord.</td>
+          </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">The companion <code>fog-sweep-64-git-diffs.zip</code> contains four ordered patches and replay instructions. Its final patch reproduces the HTML from the fourth saved version. The package copy also uses the full Fog Sweep 64 name in its header.</p>
+</main>
+</body>
+</html>

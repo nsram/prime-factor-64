@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101e22">
+<meta name="description" content="A multiplication matching game with two checkerboards and hidden tiles.">
+<title>Fog Sweep 64</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #101e22;
+    --panel: #182a2e;
+    --line: #365357;
+    --ink: #f2f5ec;
+    --muted: #a7bec0;
+    --mint: #a5efd0;
+    --gold: #ffd292;
+    --rose: #ffaaa4;
+    font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--ground);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    min-height: 100vh;
+    margin: 0;
+    background: radial-gradient(ellipse at 50% 0, #213b3f, var(--ground) 650px);
+  }
+  button { font: inherit; touch-action: manipulation; }
+  button:enabled { cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .shell { width: min(100% - 1.5rem, 58rem); margin-inline: auto; }
+  .masthead {
+    min-height: 3.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: .83rem;
+    font-weight: 760;
+  }
+  .mark {
+    display: grid;
+    grid-template-columns: repeat(2, 5px);
+    gap: 3px;
+    padding: 7px;
+    border: 1px solid #51877f;
+    border-radius: 6px;
+  }
+  .mark i { width: 5px; height: 5px; border-radius: 1px; background: var(--mint); }
+  .mark i:nth-child(2), .mark i:nth-child(3) { opacity: .35; }
+  .controls { display: flex; gap: .4rem; }
+  .control, .next {
+    min-height: 44px;
+    padding: .4rem .7rem;
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    background: #21363a;
+    color: var(--ink);
+    font-size: .79rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .control[aria-pressed="true"], .next { color: #102923; background: var(--mint); border-color: var(--mint); }
+  main { padding: 1.45rem 0 2.2rem; }
+  .eyebrow {
+    margin: 0 0 .25rem;
+    color: var(--mint);
+    font-size: .71rem;
+    font-weight: 760;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+  }
+  h1 { margin: 0 0 .28rem; font-size: clamp(2.25rem, 7vw, 4rem); line-height: 1.03; letter-spacing: -.055em; }
+  .lede { max-width: 62ch; margin: .5rem 0 1rem; color: var(--muted); font-size: .94rem; }
+  .hud {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--line);
+    border-radius: .65rem;
+    background: var(--panel);
+  }
+  .stat { padding: .48rem .75rem; }
+  .stat + .stat { border-left: 1px solid var(--line); }
+  .stat span {
+    display: block;
+    color: var(--muted);
+    font-size: .71rem;
+    letter-spacing: .055em;
+    font-weight: 720;
+    text-transform: uppercase;
+  }
+  .stat strong { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .round-track { display: grid; grid-template-columns: repeat(4, 1fr); gap: .3rem; margin-top: .44rem; }
+  .round-track span { height: .23rem; border-radius: 4px; background: #345054; }
+  .round-track .current { background: var(--gold); }
+  .round-track .done { background: var(--mint); }
+  .message {
+    display: flex;
+    align-items: center;
+    min-height: 3.1rem;
+  }
+  #feedback { margin: .38rem 0; font-size: .88rem; color: var(--muted); }
+  #feedback[data-tone="good"] { color: var(--mint); }
+  #feedback[data-tone="wrong"] { color: var(--rose); }
+  .boards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+  .board {
+    min-width: 0;
+    padding: .65rem;
+    border: 1px solid var(--line);
+    border-radius: .75rem;
+    background: var(--panel);
+  }
+  .board h2 { margin: 0 0 .42rem; color: var(--mint); font-size: .96rem; letter-spacing: .01em; }
+  .board.results h2 { color: var(--gold); }
+  .board-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .28rem; }
+  .review { max-width: 40rem; margin-inline: auto; }
+  .review-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .6rem; }
+  .review-heading h2 { margin: 0; font-size: 1.15rem; }
+  .game-summary { margin-bottom: .95rem; }
+  .score-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .score-table th, .score-table td {
+    padding: .35rem .5rem;
+    border-bottom: 1px solid var(--line);
+    text-align: right;
+  }
+  .score-table th:first-child { text-align: left; }
+  .score-table thead { color: var(--muted); }
+  .score-table tbody th { font-weight: 500; }
+  .score-table tfoot { color: var(--mint); font-weight: 760; }
+  .review-subheading { margin: 0 0 .42rem; font-size: .96rem; }
+  .review-cell {
+    --grade: var(--mint);
+    --fill: #233c38;
+    display: grid;
+    align-content: center;
+    gap: .08rem;
+    min-height: 5rem;
+    padding: .35rem .1rem;
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--grade);
+    border-radius: .42rem;
+    background: var(--fill);
+    text-align: center;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+  .review-cell[data-grade="slow"] { --grade: var(--gold); --fill: #40382d; }
+  .review-cell[data-grade="retry"] { --grade: var(--rose); --fill: #412f33; }
+  .review-expression { font-size: clamp(.86rem, 4vw, 1.12rem); }
+  .review-result { font-size: .93rem; font-weight: 720; }
+  .review-detail { color: var(--grade); font-size: .7rem; font-weight: 710; }
+  .review-time { color: var(--muted); font-size: .68rem; }
+  .review-note { margin: .55rem .1rem .1rem; color: var(--muted); font-size: .81rem; }
+  .tile {
+    --tile-bg: #284448;
+    position: relative;
+    min-width: 0;
+    min-height: 44px;
+    aspect-ratio: 1.38;
+    padding: 0 .14rem;
+    border: 1px solid #426367;
+    border-radius: .42rem;
+    background: var(--tile-bg);
+    color: var(--ink);
+    font-size: clamp(.88rem, 4.45vw, 1.25rem);
+    font-variant-numeric: tabular-nums;
+    font-weight: 780;
+    white-space: nowrap;
+    transition: background-color 140ms, border-color 140ms;
+  }
+  .tile.dark { --tile-bg: #1e393d; }
+  .tile:disabled { opacity: 1; }
+  .tile[data-state="covered"] {
+    border-color: #35575c;
+    background: repeating-linear-gradient(135deg, transparent 0 6px, #ffffff08 6px 8px), #25383e;
+    color: #a9c7ca;
+    font-size: .9rem;
+  }
+  .tile[data-state="cleared"] {
+    border: 1px dashed #345257;
+    background: #142629;
+    animation: clear-cell 310ms ease-out;
+  }
+  .tile[data-state="visible"][aria-pressed="true"] { background: var(--mint); border-color: var(--mint); color: #122c25; }
+  .results .tile[data-state="visible"][aria-pressed="true"] { background: var(--gold); border-color: var(--gold); }
+  .tile.is-wrong[data-state="visible"] { border-color: var(--rose); color: var(--rose); animation: wrong-cell 230ms ease-out; }
+  .tile.is-revealed[data-state="visible"] { animation: lift-fog 480ms ease-out; }
+  @media (hover: hover) {
+    .tile:enabled:hover { border-color: var(--mint); }
+    .control:hover, .next:hover { text-decoration: underline; }
+  }
+  @keyframes lift-fog {
+    0% { background-color: #6b9290; opacity: .5; transform: scale(.93); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes clear-cell {
+    0% { background-color: #73b9a7; transform: scale(.95); }
+    100% { transform: scale(1); }
+  }
+  @keyframes wrong-cell {
+    35% { transform: translateX(-2px); }
+    70% { transform: translateX(2px); }
+  }
+  @media (max-width: 43rem) {
+    .boards { grid-template-columns: minmax(0, 1fr); gap: .45rem; }
+    .tile { aspect-ratio: auto; height: clamp(44px, 13vw, 4rem); }
+    .board { padding: .46rem; }
+    .board h2 { margin-bottom: .3rem; }
+    main { padding-top: .85rem; }
+    .masthead { min-height: 3.25rem; }
+    .lede { margin: .36rem 0 .68rem; font-size: .87rem; }
+    .message { min-height: 2.65rem; }
+    .stat { padding: .33rem .45rem; }
+    .stat span { font-size: .65rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="masthead">
+    <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span> Fog Sweep 64</div>
+    <div class="controls">
+      <button class="control" id="sound" type="button" aria-pressed="true">Sound on</button>
+      <button class="control" id="restart" type="button">New game</button>
+    </div>
+  </header>
+  <main>
+    <p class="eyebrow">Four rounds · 64 facts</p>
+    <h1>Fog Sweep 64</h1>
+    <p class="lede">Tap an expression and its result in either order. Clear two pairs to uncover more tiles on both boards.</p>
+    <section class="hud" aria-label="Game progress">
+      <div class="stat"><span>Round</span><strong id="round-number">1 / 4</strong></div>
+      <div class="stat"><span>Pairs cleared</span><strong id="clear-count">0 / 64</strong></div>
+      <div class="stat"><span>First-try score</span><strong id="first-try">—</strong></div>
+    </section>
+    <div class="round-track" id="round-track" aria-hidden="true"></div>
+    <div class="message">
+      <p id="feedback" role="status" aria-atomic="true"></p>
+    </div>
+    <div class="boards" id="boards">
+      <section class="board" aria-labelledby="expressions-title">
+        <h2 id="expressions-title">Expressions</h2>
+        <div class="board-grid" id="expressions"></div>
+      </section>
+      <section class="board results" aria-labelledby="results-title">
+        <h2 id="results-title">Results</h2>
+        <div class="board-grid" id="results"></div>
+      </section>
+    </div>
+    <section class="board review" id="review" aria-labelledby="review-title" hidden>
+      <div class="review-heading">
+        <h2 id="review-title" tabindex="-1">Round review</h2>
+        <button class="next" id="next" type="button">Next round</button>
+      </div>
+      <p class="review-note" id="round-time"></p>
+      <div class="game-summary" id="game-summary" hidden>
+        <table class="score-table" aria-label="Score and time by round">
+          <thead>
+            <tr><th scope="col">Round</th><th scope="col">First-try score</th><th scope="col">Time</th></tr>
+          </thead>
+          <tbody id="round-scores"></tbody>
+          <tfoot id="total-score"></tfoot>
+        </table>
+        <p class="review-note">Time runs from the first tap to the last match in each round.</p>
+      </div>
+      <h3 class="review-subheading" id="final-round-title" hidden></h3>
+      <div class="board-grid" id="review-grid"></div>
+      <p class="review-note">Each expression is in its original square. A wrong guess counts against the first tile you tapped. Slow means <span id="slow-seconds">5</span> seconds or more between taps on the successful match.</p>
+    </section>
+  </main>
+</div>
+<script>
+  "use strict";
+
+  const roundSize = 16;
+  const initialVisible = 8;
+  const revealSize = 2;
+  const slowSeconds = 5;
+
+  function buildDeck() {
+    const byResult = new Map();
+    for (let first = 3; first <= 19; first++) {
+      if (first === 10) continue;
+      for (let second = first + 1; second <= 19; second++) {
+        const result = first * second;
+        if (second === 10 || result <= 100) continue;
+        if (!byResult.has(result)) byResult.set(result, []);
+        byResult.get(result).push([first, second]);
+      }
+    }
+    for (const factor of [11, 13, 14, 15, 16, 17, 18, 19]) {
+      byResult.set(factor * factor, [[factor, factor]]);
+    }
+    byResult.set(357, [[17, 21]]);
+    return byResult;
+  }
+
+  function shuffle(items) {
+    const shuffled = [...items];
+    for (let index = shuffled.length - 1; index > 0; index--) {
+      const swap = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[swap]] = [shuffled[swap], shuffled[index]];
+    }
+    return shuffled;
+  }
+
+  function dealRounds(deck) {
+    const buckets = Array.from({ length: 10 }, () => []);
+    for (const entry of deck) buckets[entry[0] % 10].push(entry);
+
+    const splits = { 7: [3, 4], 8: [4, 4], 9: [3, 4, 2], 10: [3, 3, 4] };
+    const groups = Array.from({ length: 6 }, () => []);
+    for (const bucket of buckets) {
+      const entries = shuffle(bucket);
+      for (const size of splits[entries.length] ?? [entries.length]) {
+        groups[size].push(entries.splice(0, size));
+      }
+    }
+    const shuffledGroups = groups.map(shuffle);
+    const layouts = [[5, 3, 4, 4], [4, 3, 3, 2, 4], [4, 3, 3, 2, 4], [4, 4, 4, 4]];
+
+    return shuffle(layouts).map(layout => {
+      const visible = [];
+      const waves = [];
+      for (const size of layout) {
+        const group = shuffledGroups[size].pop();
+        // Put triples in the opening. Each later wave is a same-ending pair.
+        if (size % 2) visible.push(...group.splice(0, 3));
+        while (group.length) waves.push(group.splice(0, revealSize));
+      }
+      const shuffledWaves = shuffle(waves);
+      while (visible.length < initialVisible) visible.push(...shuffledWaves.pop());
+      return [...shuffle(visible), ...shuffledWaves.flat()].map(([result, options]) => {
+        const factors = options[Math.floor(Math.random() * options.length)];
+        return { result, factors: Math.random() < .5 ? [...factors].reverse() : factors };
+      });
+    });
+  }
+
+  const deck = buildDeck();
+  const boards = [document.querySelector("#expressions"), document.querySelector("#results")];
+  const playBoards = document.querySelector("#boards");
+  const roundNumber = document.querySelector("#round-number");
+  const clearCount = document.querySelector("#clear-count");
+  const firstTry = document.querySelector("#first-try");
+  const track = document.querySelector("#round-track");
+  const feedback = document.querySelector("#feedback");
+  const review = document.querySelector("#review");
+  const reviewTitle = document.querySelector("#review-title");
+  const roundTime = document.querySelector("#round-time");
+  const gameSummary = document.querySelector("#game-summary");
+  const roundScores = document.querySelector("#round-scores");
+  const totalScore = document.querySelector("#total-score");
+  const finalRoundTitle = document.querySelector("#final-round-title");
+  const reviewGrid = document.querySelector("#review-grid");
+  const next = document.querySelector("#next");
+  const sound = document.querySelector("#sound");
+  document.querySelector("#slow-seconds").textContent = slowSeconds;
+  let rounds;
+  let roundIndex;
+  let roundCleared;
+  let totalCleared;
+  let revealed;
+  let tiles;
+  let selected;
+  let selectedAt;
+  let roundStartedAt;
+  let roundPerformance;
+  let roundResults;
+  let wrong;
+  let soundOn = true;
+  let audio;
+
+  const notes = {
+    select: [390],
+    miss: [200],
+    match: [625],
+    reveal: [525, 660, 785],
+    round: [520, 660, 785, 1045],
+    finish: [520, 660, 785, 1045, 1320, 1568]
+  };
+
+  async function playSound(cue) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!soundOn || !AudioContext) return;
+    try {
+      audio ??= new AudioContext();
+      if (audio.state !== "running") await audio.resume();
+      if (!soundOn) return;
+      const start = audio.currentTime + .01;
+      const melody = notes[cue];
+      const tones = melody.map((pitch, index) => [
+        pitch, index * .072, index === melody.length - 1 ? .19 : .14,
+        cue === "select" ? .035 : .085
+      ]);
+      if (cue === "finish") {
+        for (const pitch of [261.63, 523.25, 659.25, 783.99]) {
+          tones.push([pitch, .51, .84, .065]);
+        }
+      }
+      for (const [pitch, offset, duration, volume] of tones) {
+        const at = start + offset;
+        const end = at + duration;
+        const tone = audio.createOscillator();
+        const gain = audio.createGain();
+        tone.type = cue === "miss" ? "sine" : "triangle";
+        tone.frequency.setValueAtTime(pitch, at);
+        gain.gain.setValueAtTime(.001, at);
+        gain.gain.linearRampToValueAtTime(volume, at + .012);
+        gain.gain.exponentialRampToValueAtTime(.001, end);
+        tone.connect(gain);
+        gain.connect(audio.destination);
+        tone.onended = () => gain.disconnect();
+        tone.start(at);
+        tone.stop(end);
+      }
+    } catch {
+      // Audio is optional on browsers that block playback.
+    }
+  }
+
+  function status(message, tone = "") {
+    feedback.dataset.tone = tone;
+    feedback.textContent = message;
+  }
+
+  function updateProgress() {
+    roundNumber.textContent = (roundIndex + 1) + " / " + rounds.length;
+    clearCount.textContent = totalCleared + " / " + deck.size;
+    updateFirstTry();
+    track.replaceChildren(...rounds.map((_, index) => {
+      const step = document.createElement("span");
+      if (index < roundIndex || (index === roundIndex && roundCleared === roundSize)) step.className = "done";
+      else if (index === roundIndex) step.className = "current";
+      return step;
+    }));
+  }
+
+  function updateFirstTry() {
+    const attempted = roundPerformance.size;
+    firstTry.textContent = attempted ? countFirstTries() + " / " + attempted : "—";
+  }
+
+  function countFirstTries() {
+    return [...roundPerformance.values()].filter(record => !record.retried).length;
+  }
+
+  function showTile(tile, state, animate = false) {
+    const { button, side, fact } = tile;
+    button.dataset.state = state;
+    button.disabled = state !== "visible";
+    button.setAttribute("aria-pressed", "false");
+    button.classList.toggle("is-revealed", animate);
+    if (state === "visible") {
+      button.textContent = side === 0 ? fact.factors.join(" × ") : fact.result;
+      button.setAttribute("aria-label", side === 0 ? fact.factors.join(" times ") : String(fact.result));
+    } else {
+      button.textContent = state === "covered" ? "?" : "";
+      button.setAttribute("aria-label", state === "covered" ? "Covered tile" : "Cleared tile");
+    }
+  }
+
+  function drawRound() {
+    roundCleared = 0;
+    revealed = initialVisible;
+    selected = null;
+    roundStartedAt = null;
+    wrong = [];
+    roundPerformance = new Map();
+    review.hidden = true;
+    reviewGrid.replaceChildren();
+    playBoards.hidden = false;
+    const round = rounds[roundIndex];
+    const opening = new Set(round.slice(0, initialVisible).map(fact => fact.result));
+    tiles = boards.map((board, side) => {
+      const byResult = new Map();
+      board.replaceChildren(...shuffle(round).map((fact, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "tile";
+        button.classList.toggle("dark", (index + Math.floor(index / 4)) % 2 === 1);
+        const tile = { button, side, fact };
+        byResult.set(fact.result, tile);
+        showTile(tile, opening.has(fact.result) ? "visible" : "covered");
+        button.addEventListener("click", event => pick(tile, event.detail === 0));
+        return button;
+      }));
+      return byResult;
+    });
+    updateProgress();
+    status("Choose any face-up tile.");
+  }
+
+  function revealNext() {
+    const wave = rounds[roundIndex].slice(revealed, revealed + revealSize);
+    for (const fact of wave) {
+      for (const board of tiles) showTile(board.get(fact.result), "visible", true);
+    }
+    revealed += wave.length;
+    return wave.length;
+  }
+
+  function formatTime(tenths) {
+    const minutes = Math.floor(tenths / 600);
+    const seconds = (tenths % 600 / 10).toFixed(1).padStart(4, "0");
+    return minutes + ":" + seconds;
+  }
+
+  function scoreRow(label, score, possible, tenths) {
+    const row = document.createElement("tr");
+    const heading = document.createElement("th");
+    heading.scope = "row";
+    heading.textContent = label;
+    const scoreCell = document.createElement("td");
+    scoreCell.textContent = score + " / " + possible;
+    const timeCell = document.createElement("td");
+    timeCell.textContent = formatTime(tenths);
+    row.append(heading, scoreCell, timeCell);
+    return row;
+  }
+
+  function showReview(finished) {
+    const label = "Round " + (roundIndex + 1);
+    reviewTitle.textContent = finished ? "Game complete" : label + " review";
+    roundTime.hidden = finished;
+    gameSummary.hidden = !finished;
+    finalRoundTitle.hidden = !finished;
+    if (finished) {
+      let scoreTotal = 0;
+      let timeTotal = 0;
+      roundScores.replaceChildren(...roundResults.map(({ score, tenths }, index) => {
+        scoreTotal += score;
+        timeTotal += tenths;
+        return scoreRow("Round " + (index + 1), score, roundSize, tenths);
+      }));
+      totalScore.replaceChildren(scoreRow("Total", scoreTotal, deck.size, timeTotal));
+      finalRoundTitle.textContent = label + " review";
+    } else {
+      roundTime.textContent = "Round time " + formatTime(roundResults[roundIndex].tenths);
+    }
+    const cards = Array.from(tiles[0].values(), ({ fact }) => {
+      const { retried, elapsed } = roundPerformance.get(fact.result);
+      const slow = elapsed >= slowSeconds * 1000;
+      const card = document.createElement("div");
+      card.className = "review-cell";
+      card.dataset.grade = retried ? "retry" : slow ? "slow" : "clean";
+      const expression = document.createElement("strong");
+      expression.className = "review-expression";
+      expression.textContent = fact.factors.join(" × ");
+      const result = document.createElement("span");
+      result.className = "review-result";
+      result.textContent = "= " + fact.result;
+      const detail = document.createElement("span");
+      detail.className = "review-detail";
+      detail.textContent = retried ? (slow ? "Retry + slow" : "Retry") : slow ? "Slow" : "First try";
+      const time = document.createElement("span");
+      time.className = "review-time";
+      time.textContent = (Math.floor(elapsed / 100) / 10).toFixed(1) + " s";
+      card.append(expression, result, detail, time);
+      return card;
+    });
+    reviewGrid.replaceChildren(...cards);
+    playBoards.hidden = true;
+    review.hidden = false;
+    reviewTitle.focus();
+  }
+
+  function pick(tile, keyboard) {
+    if (tile.button.disabled || roundCleared === roundSize) return;
+    const now = performance.now();
+    roundStartedAt ??= now;
+    for (const button of wrong) button.classList.remove("is-wrong");
+    wrong = [];
+
+    const first = selected;
+    if (first) first.button.setAttribute("aria-pressed", "false");
+    selected = null;
+    if (!first || first.side === tile.side) {
+      if (first === tile) {
+        status("Choose any face-up tile.");
+        return;
+      }
+      selected = tile;
+      selectedAt = now;
+      tile.button.setAttribute("aria-pressed", "true");
+      status(tile.side === 0 ? "Now tap its result." : "Now tap its expression.");
+      playSound("select");
+      return;
+    }
+
+    const record = roundPerformance.get(first.fact.result) ?? { retried: false, elapsed: 0 };
+    roundPerformance.set(first.fact.result, record);
+    if (first.fact.result !== tile.fact.result) {
+      record.retried = true;
+      updateFirstTry();
+      wrong = [first.button, tile.button];
+      for (const button of wrong) button.classList.add("is-wrong");
+      status("Those tiles don’t match. Try another pair.", "wrong");
+      if (keyboard) first.button.focus({ preventScroll: true });
+      playSound("miss");
+      return;
+    }
+
+    record.elapsed = now - selectedAt;
+    showTile(first, "cleared");
+    showTile(tile, "cleared");
+    roundCleared++;
+    totalCleared++;
+    const wave = roundCleared % revealSize === 0 ? revealNext() : 0;
+    updateProgress();
+    const equation = tile.fact.factors.join(" × ") + " = " + tile.fact.result + ".";
+    if (roundCleared === roundSize) {
+      const finished = totalCleared === deck.size;
+      roundResults.push({
+        score: countFirstTries(),
+        tenths: Math.round((now - roundStartedAt) / 100)
+      });
+      status(equation + (finished ? " All 64 pairs cleared!" : " Round cleared!"), "good");
+      next.textContent = finished ? "Play again" : "Next round";
+      showReview(finished);
+      playSound(finished ? "finish" : "round");
+      return;
+    }
+
+    status(equation + (wave ? " Two new tiles on each board." : ""), "good");
+    if (keyboard) boards[first.side].querySelector("button:enabled")?.focus({ preventScroll: true });
+    playSound(wave ? "reveal" : "match");
+  }
+
+  function newGame() {
+    rounds = dealRounds(deck);
+    roundResults = [];
+    roundIndex = 0;
+    totalCleared = 0;
+    drawRound();
+    window.scrollTo(0, 0);
+  }
+
+  document.querySelector("#restart").addEventListener("click", newGame);
+  next.addEventListener("click", () => {
+    if (totalCleared === deck.size) {
+      newGame();
+    } else {
+      roundIndex++;
+      drawRound();
+      window.scrollTo(0, 0);
+    }
+    boards[0].querySelector("button:enabled")?.focus({ preventScroll: true });
+  });
+  sound.addEventListener("click", () => {
+    soundOn = !soundOn;
+    sound.setAttribute("aria-pressed", String(soundOn));
+    sound.textContent = soundOn ? "Sound on" : "Sound off";
+    if (soundOn) playSound("select");
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && selected) {
+      selected.button.setAttribute("aria-pressed", "false");
+      selected = null;
+      status("Choose any face-up tile.");
+    }
+  });
+
+  newGame();
+</script>
+</body>
+</html>

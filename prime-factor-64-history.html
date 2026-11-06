@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ed">
+  <meta name="description" content="How the Prime Factor 64 game evolved over 20 saved versions.">
+  <title>How We Built Prime Factor 64</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="site-bar">
+    <a class="brand" href="index.html">
+      <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      Prime Factor 64
+    </a>
+    <nav class="site-nav" aria-label="Project navigation"><a href="index.html">Home</a><a href="prime-factor-64.html">Prime Factor 64</a><a href="fog-sweep-64.html">Fog Sweep 64</a><a href="learning-guide.html">Learning guide</a><a href="prime-factor-64-history.html" aria-current="page">Prime Factor 64 history</a><a href="fog-sweep-64-history.html">Fog Sweep 64 history</a></nav>
+  </div>
+</header>
+<main id="main" class="document">
+  <header class="doc-header">
+    <p class="eyebrow">Project history</p>
+    <h1>How We Built Prime Factor 64</h1>
+    <p class="lede">A case study in human and AI collaboration</p>
+    <p class="meta">Project by Sriram Natarajan with ChatGPT  |  November 5–6, 2026</p>
+  </header>
+  <div class="doc-layout">
+    <nav class="toc" aria-label="On this page">
+      <details open>
+        <summary>On this page</summary>
+        <ul><li><a href="#the-seven-primes">The seven primes</a></li><li><a href="#two-squares-that-needed-a-cue">Two squares that needed a cue</a></li><li><a href="#from-39-products-to-55-results">From 39 products to 55 results</a></li><li><a href="#playing-the-first-game">Playing the first game</a></li><li><a href="#board-sizes-and-the-move-to-60">Board sizes and the move to 60</a></li><li><a href="#the-final-deck-and-session-controls">The final deck and session controls</a></li><li><a href="#the-final-playtest-and-polish">The final playtest and polish</a></li><li><a href="#ui-history-from-the-first-release">UI history from the first release</a></li><li><a href="#ui-history-through-the-final-edit">UI history through the final edit</a></li><li><a href="#how-the-name-was-chosen">How the name was chosen</a></li><li><a href="#other-paths-we-considered">Other paths we considered</a></li><li><a href="#the-64-results-in-the-final-deck">The 64 results in the final deck</a></li><li><a href="#technical-version-log">Technical version log</a></li></ul>
+      </details>
+    </nav>
+    <article class="doc-body">
+      <p>Prime Factor 64 began with Sriram’s wish to memorize a small multiplication table with enough confidence that he would stop second-guessing himself. The conversation became a one-page game for practicing 64 selected multiplication facts. Sriram supplied the learning goal, tested the game, and made choices about difficulty and play. ChatGPT worked out the arithmetic, translated those choices into a playable design, and revised it against his feedback.</p>
+<h2 id="the-seven-primes">The seven primes</h2>
+<p>The first request was for a multiplication table of the primes from 3 through 19, multiplied by one another. There are seven. The shaded diagonal shows the squares that first caught Sriram’s attention.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-label="The seven primes table">
+<table class="wide-table">
+  <thead>
+    <tr><th scope="col" class="numeric"><strong>×</strong></th><th scope="col" class="numeric"><strong>3</strong></th><th scope="col" class="numeric"><strong>5</strong></th><th scope="col" class="numeric"><strong>7</strong></th><th scope="col" class="numeric"><strong>11</strong></th><th scope="col" class="numeric"><strong>13</strong></th><th scope="col" class="numeric"><strong>17</strong></th><th scope="col" class="numeric"><strong>19</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row" class="numeric"><strong>3</strong></th><td class="numeric tint"><strong>9</strong></td><td class="numeric">15</td><td class="numeric">21</td><td class="numeric">33</td><td class="numeric">39</td><td class="numeric">51</td><td class="numeric">57</td></tr>
+    <tr><th scope="row" class="numeric"><strong>5</strong></th><td class="numeric">15</td><td class="numeric tint"><strong>25</strong></td><td class="numeric">35</td><td class="numeric">55</td><td class="numeric">65</td><td class="numeric">85</td><td class="numeric">95</td></tr>
+    <tr><th scope="row" class="numeric"><strong>7</strong></th><td class="numeric">21</td><td class="numeric">35</td><td class="numeric tint"><strong>49</strong></td><td class="numeric">77</td><td class="numeric">91</td><td class="numeric">119</td><td class="numeric">133</td></tr>
+    <tr><th scope="row" class="numeric"><strong>11</strong></th><td class="numeric">33</td><td class="numeric">55</td><td class="numeric">77</td><td class="numeric tint"><strong>121</strong></td><td class="numeric">143</td><td class="numeric">187</td><td class="numeric">209</td></tr>
+    <tr><th scope="row" class="numeric"><strong>13</strong></th><td class="numeric">39</td><td class="numeric">65</td><td class="numeric">91</td><td class="numeric">143</td><td class="numeric tint"><strong>169</strong></td><td class="numeric">221</td><td class="numeric">247</td></tr>
+    <tr><th scope="row" class="numeric"><strong>17</strong></th><td class="numeric">51</td><td class="numeric">85</td><td class="numeric">119</td><td class="numeric">187</td><td class="numeric">221</td><td class="numeric tint"><strong>289</strong></td><td class="numeric">323</td></tr>
+    <tr><th scope="row" class="numeric"><strong>19</strong></th><td class="numeric">57</td><td class="numeric">95</td><td class="numeric">133</td><td class="numeric">209</td><td class="numeric">247</td><td class="numeric">323</td><td class="numeric tint"><strong>361</strong></td></tr>
+  </tbody>
+</table>
+</div>
+<h2 id="two-squares-that-needed-a-cue">Two squares that needed a cue</h2>
+<p>The last two squares were the ones he hesitated on. He already had a cue for 19² = 361, one more than the 360 degrees in a full circle. For 17² = 289, ChatGPT offered the cue “17 is two numbers: 8 and 9.” Since 8 + 9 = 17, thinking “two, eight, nine” supplies the three digits.</p>
+<p>Sriram then narrowed the goal to results greater than 100. He wanted the association to work in both directions, so 13 × 17 should bring 221 to mind and 221 should bring 13 × 17 to mind. He first asked for the prime-by-prime results over 100, then set the squares aside as the easier cases for this round of practice.</p>
+<p class="note">After the narrative come the UI history, naming discussion, alternatives, complete deck, and technical version log.</p>
+<h2 id="from-39-products-to-55-results">From 39 products to 55 results</h2>
+<p>Sriram proposed a difficulty order. Start with distinct primes, move to a prime times an odd composite below 20, then include a prime times an even composite. When he asked how many products this made, he also specified that 10 should be excluded. That removed 110, 130, 170, and 190 from these tiers.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-label="From 39 products to 55 results table">
+<table>
+  <thead>
+    <tr><th scope="col"><strong>Practice tier</strong></th><th scope="col" class="numeric"><strong>Distinct results</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Two different primes</td><td class="numeric">8</td></tr>
+    <tr><td>A prime and an odd composite</td><td class="numeric">8</td></tr>
+    <tr><td>A prime and an even composite, excluding 10</td><td class="numeric">23</td></tr>
+    <tr><td>Total</td><td class="numeric">39</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="note">The eight distinct-prime results are 119, 133, 143, 187, 209, 221, 247, and 323.</p>
+<h3 id="a-game-for-the-practice-list">A game for the practice list</h3>
+<p>For those 39 products, Sriram asked for a single-page matching game that would finish once every expression had been paired with its result. He added a stopwatch and asked for each product to be displayed in one of two randomly chosen orders, such as 13 × 17 or 17 × 13.</p>
+<h3 id="more-difficult-products-and-repeated-results">More difficult products and repeated results</h3>
+<p>Asked what else could be troublesome, ChatGPT suggested six products of different even composites. The shortlist was 12 × 14 = 168, 12 × 16 = 192, 12 × 18 = 216, 14 × 16 = 224, 14 × 18 = 252, and 16 × 18 = 288. Those six would have brought the list to 45.</p>
+<p>Sriram pointed out that two expressions with the same answer could not both appear in one game. Enumerating every qualifying composite-by-composite expression adds 20 expressions but only 16 new results. In the full pool, 59 unordered expressions therefore become 55 distinct results. The game keeps both factor pairs as options for each collision and deals only one expression for that result in a run.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-label="More difficult products and repeated results table">
+<table>
+  <thead>
+    <tr><th scope="col" class="numeric"><strong>Result</strong></th><th scope="col" class="numeric"><strong>First factor pair</strong></th><th scope="col" class="numeric"><strong>Other factor pair</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="numeric">108</td><td class="numeric">6 × 18</td><td class="numeric">9 × 12</td></tr>
+    <tr><td class="numeric">112</td><td class="numeric">7 × 16</td><td class="numeric">8 × 14</td></tr>
+    <tr><td class="numeric">126</td><td class="numeric">7 × 18</td><td class="numeric">9 × 14</td></tr>
+    <tr><td class="numeric">144</td><td class="numeric">8 × 18</td><td class="numeric">9 × 16</td></tr>
+  </tbody>
+</table>
+</div>
+<h2 id="playing-the-first-game">Playing the first game</h2>
+<p>When Sriram asked how to fit 55 results, the design put them across seven boards, six with eight matches and one with seven. He approved implementation. Prime Match 55 used separate, shuffled columns for expressions and results. The player could start on either side, see the stopwatch and progress, and reach a score and review screen after the final match. Each new deal could change the card order, factor order, and any eligible alternate factor pair.</p>
+<h3 id="the-last-digit-gave-too-much-away">The last digit gave too much away</h3>
+<blockquote><p><em>“There is a cheat. if the last digit of the result is unique in a set then its easier”</em></p></blockquote>
+<p>The player could work out just the units digit and scan for the sole candidate. The first fix grouped results that shared an ending before dealing boards, keeping at least two results for every ending used on those original seven boards. That preserved shuffling while making a last-digit shortcut insufficient on its own.</p>
+<h3 id="pausing-and-giving-the-game-a-voice">Pausing and giving the game a voice</h3>
+<p>Sriram asked for Pause and Resume to freeze the game. The board was hidden while paused, input was blocked, and the timer and any pending board advance resumed from where they had stopped. He then asked what sounds might increase engagement and approved adding them. The game gained a correct-match tone, a low miss tone, a board-clear chime, and a short completion cue, with a Sound toggle.</p>
+<h3 id="from-recognizing-a-target-to-recalling-it">From recognizing a target to recalling it</h3>
+<p>Sriram liked the sounds and noticed a deeper issue while playing. He would make a crude estimate and look for a nearby target in the results column. He wanted something within the board cycle that would help the exact association stick. ChatGPT proposed two checks after each board, one asking for a product and one asking for the factors.</p>
+<p>Sriram approved the idea and asked for a toggle and an early exit that still returned a score. The implemented checks hide the choices and prioritize missed or slower pairs. Factor recall accepts either order and either eligible factorization. Show answer reveals the equation without adding a scored attempt.</p>
+<p>End game shows progress, elapsed time, and first-try accuracy on pairs attempted so far, plus recall accuracy when applicable and a review of missed pairs. A wrong guess is charged to the pair the player started from.</p>
+<p>Sriram asked why the stopwatch stopped during recall. ChatGPT explained that the stopwatch measured time on the matching boards, while recall was scored for accuracy and allowed time to think or type. The game kept recall untimed.</p>
+<h2 id="board-sizes-and-the-move-to-60">Board sizes and the move to 60</h2>
+<h3 id="what-the-player-needed-to-see">What the player needed to see</h3>
+<p>On an eight-pair board, Sriram noted that solving seven made the last answer obvious. He decided that was acceptable and proposed a better use of attention. Completed cards moved to the top of both columns, visibly grouped and locked, leaving the unfinished cards together below.</p>
+<p>Sriram asked how to copy the HTML so he could use the game source. The project kept a standalone HTML file alongside the hosted game. He also asked what the X at the upper left meant and said it was confusing. ChatGPT replaced it with a four-tile mark.</p>
+<h3 id="the-four-pair-layout-had-one-board-too-many">The four pair layout had one board too many</h3>
+<p>The game originally showed eight pairs per screen. Sriram asked for four and twelve as well, with a board count that followed the size dropdown. Preserving shared endings in the first four-pair deal made 15 boards. Sriram expected 14 and suggested allocating the final board first, then dealing the rest.</p>
+<p>ChatGPT reserved a final triple first. Of the 13 full boards, 12 used two same-ending pairs and one used a same-ending triple plus a singleton. That single exception let the deck fit without an extra board. When the count next to the dropdown still appeared static to Sriram, each option was labeled with its own size and board count.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-label="The four pair layout had one board too many table">
+<table>
+  <thead>
+    <tr><th scope="col"><strong>Deck and version</strong></th><th scope="col" class="numeric"><strong>Pairs per board</strong></th><th scope="col" class="numeric"><strong>Board arrangement</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>55, original four-pair deal</td><td class="numeric">4</td><td class="numeric">11 × 4 + 3 × 3 + 1 × 2</td></tr>
+    <tr><td>55, corrected four-pair deal</td><td class="numeric">4</td><td class="numeric">13 × 4 + 1 × 3</td></tr>
+    <tr><td>55, other sizes</td><td class="numeric">8 or 12</td><td class="numeric">6 × 8 + 7 or 4 × 12 + 7</td></tr>
+    <tr><td>60, revised four-pair deal</td><td class="numeric">4</td><td class="numeric">15 × 4</td></tr>
+    <tr><td>60, other sizes</td><td class="numeric">8 or 12</td><td class="numeric">7 × 8 + 4 or 5 × 12</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="note">Each multiplication in the last column gives the number of boards times the number of pairs per board. A lone number is one shorter board.</p>
+<h3 id="five-squares-solved-a-layout-problem">Five squares solved a layout problem</h3>
+<p>Sriram suggested adding 11², 13², 15², 17², and 19². Their results, 121, 169, 225, 289, and 361, brought the deck to 60. He revisited the first 15-board arrangement. This time all 15 boards could hold four pairs. Thirteen boards used two shared-ending pairs and two used a triple and a singleton. The twelve-pair option also divided evenly into five boards. Sriram felt 60 covered most of the tricky three-digit results he wanted to practice.</p>
+<h2 id="the-final-deck-and-session-controls">The final deck and session controls</h2>
+<h3 id="home-and-recall-settings">Home and recall settings</h3>
+<p>Sriram asked for the top-left logo to return to the original start screen and for a due-diligence pass across the current spec. ChatGPT made the logo a Home link and had it stop the active timer and pending advance when leaving a game. Sriram then asked for an option of four recall checks and a different sound for each correct answer. The two-check toggle became an Off, 2, or 4 menu. Correct recall answers received different rising two-note chimes by prompt position.</p>
+<h3 id="from-prime-match-to-prime-factor-64">From Prime Match to Prime Factor 64</h3>
+<p>Sriram compared Prime Match, Factor Match, Multiply Match, and Prime Factor for distinctiveness. He also revisited whether the 60 facts covered the right ground. He found 14² and 16² much more familiar than 18², considered a swap involving 15², then proposed keeping 15² and adding all three. The new squares were 14² = 196, 16² = 256, and 18² = 324. That left 63 results.</p>
+<p>The last addition was 17 × 21 = 357. With 64 results, a full game could use equally sized boards of 4, 8, or 16 pairs. Sriram liked the sound of Prime Factor 64, approved the change, and kept four pairs as the default. The name carried forward the original prime-table idea even though the deck had grown to include composite factors.</p>
+<p>The final deck contains the 55 earlier distinct results, eight specified squares, and 357. It is a targeted set of three-digit facts. For example, 144 can appear as 8 × 18 or 9 × 16. It was already present before the squares were added, and 12 × 12 was never added as a display option.</p>
+<h3 id="make-the-length-a-separate-choice">Make the length a separate choice</h3>
+<p>Sriram asked to choose the number of boards independently of the number of pairs per board. ChatGPT tied the menus to four session totals so changing the board size recalculates the board count while preserving the chosen number of matches.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-label="Make the length a separate choice table">
+<table>
+  <thead>
+    <tr><th scope="col" class="numeric"><strong>Pairs per board</strong></th><th scope="col" class="numeric"><strong>16 matches</strong></th><th scope="col" class="numeric"><strong>32 matches</strong></th><th scope="col" class="numeric"><strong>48 matches</strong></th><th scope="col" class="numeric"><strong>64 matches</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="numeric">4</td><td class="numeric">4 boards</td><td class="numeric">8 boards</td><td class="numeric">12 boards</td><td class="numeric">16 boards</td></tr>
+    <tr><td class="numeric">8</td><td class="numeric">2 boards</td><td class="numeric">4 boards</td><td class="numeric">6 boards</td><td class="numeric">8 boards</td></tr>
+    <tr><td class="numeric">16</td><td class="numeric">1 board</td><td class="numeric">2 boards</td><td class="numeric">3 boards</td><td class="numeric">4 boards</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="note">A fresh page starts with 4 pairs per board, 4 boards, and recall Off. The latest choices carry through Home and Play again until reload. Sound has its own saved preference.</p>
+<h2 id="the-final-playtest-and-polish">The final playtest and polish</h2>
+<h3 id="make-factor-feedback-explain-the-guess">Make factor feedback explain the guess</h3>
+<p>Sriram checked whether recall had sound. ChatGPT verified that correct answers play their own position-based chimes with Sound on, an incorrect answer plays the low cue, and Show answer is silent. Sriram then asked the game to multiply the two numbers he entered so he could see what his factors implied. He also asked the home page to state the factor limit. It now says every factor is 19 or less, except for 21 in 21 × 17.</p>
+<p>Correct factor submissions now show the entered equation in the player’s order. For a miss, the app shows both the entered product and the target equation.</p>
+<h3 id="give-the-finish-its-own-sound">Give the finish its own sound</h3>
+<p>Sriram reported that the completion sound was missing in a four-board game and asked for a spectacular one. The existing cue was a brief three-note arpeggio close in character to the board-clear chime. ChatGPT replaced it with six rising notes, a sustained C-major chord, and a high flourish. The completion screen now triggers the fanfare from one shared path, including after audio resumes if the browser suspended it. With recall enabled, it plays when the player selects See score.</p>
+<p>ChatGPT played the default four-board game to 16/16 in the browser. Programmatic checks covered the cue with recall off, with two checks, and with four, plus the 64-match finish, audio resumption, mute, and early exit. The original device-specific cause of the missing sound remained unconfirmed.</p>
+<h3 id="two-lines-for-the-final-edit">Two lines for the final edit</h3>
+<p>Sriram’s final request was to put the two sentences on separate lines. The tested feedback reads as follows.</p>
+<blockquote><p><em>Your factors give 13 × 18 = 234.<br>The match is 13 × 17 = 221.</em></p></blockquote>
+<h3 id="what-each-collaborator-contributed">What each collaborator contributed</h3>
+<p>Sriram was the learner, product designer, and playtester. His observations supplied requirements that only surfaced when the game was in use. ChatGPT made the proposals testable by enumerating the arithmetic, designing the board deals, and turning feedback into revised versions. The same process handled changes at very different scales, from the number of facts in the deck to the line break that made one answer easier to read.</p>
+<p class="note"><a href="prime-factor-64.html">Play Prime Factor 64</a>   ·   <a href="prime-factor-64.html" download="prime-factor-64.html">Open the standalone HTML</a></p>
+<h2 id="ui-history-from-the-first-release">UI history from the first release</h2>
+<p>The release log follows the saved game versions in order. It includes changes to the screen, to what the player hears, and to what the same controls do from one version to the next.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-label="UI history from the first release table">
+<table>
+  <thead>
+    <tr><th scope="col"><strong>Release step</strong></th><th scope="col"><strong>What changed for the player</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>01  Prime Match 55</td><td>The start page showed a × mark, ‘55 matches · 7 boards,’ the 13 × 17 ↔ 221 example, and Start game. The board used shuffled Expressions and Results columns, a sticky stopwatch and match count, and a segmented board tracker. The finish screen had Matched, Elapsed, First try, Play again, and Pairs to review.</td></tr>
+    <tr><td>02  Shared endings</td><td>The screen stayed the same, but fresh boards now dealt groups with repeated units digits. Each ending had a companion on the original seven boards.</td></tr>
+    <tr><td>03  Pause and Resume</td><td>Pause joined the status row and became Resume when pressed. A ‘Game paused’ panel replaced the cards and hints while the stopwatch and board advance waited.</td></tr>
+    <tr><td>04  Sound on and off</td><td>A Sound on/off control joined Pause. Correct matches made a short pop, misses a low tap, and board and game completion played two- and three-note cues. ‘Choose any card’ became the opening hint. The sound setting was saved independently.</td></tr>
+    <tr><td>05  Recall and early score</td><td>Start and replay gained a checked Recall checks box. The Untimed panel had a prompt counter, numeric fields, Check answer and Show answer, followed by Next prompt, Next board, or See score. Pause also covered recall. End game showed ‘Game ended,’ ‘Your score so far,’ and attempted-pair and optional Recall stats. The controls and stats reflowed on narrow screens.</td></tr>
+    <tr><td>06  Completed cards rise</td><td>Matched cards moved to the top of both columns in match order. They became shorter, kept their checkmarks, and gained a small gap before the first unmatched card.</td></tr>
+    <tr><td>07  Four tiles</td><td>The upper-left × was replaced with a two-by-two tile mark. The wordmark stayed Prime Match.</td></tr>
+    <tr><td>08  Board size menu</td><td>Start and replay gained Pairs per board with 4, 8, or 12, initially defaulting to 8. The 12-pair view tightened card spacing. The start summary recalculated the board count for the selected size.</td></tr>
+    <tr><td>09  Count beside the menu</td><td>The board count moved out of the heading to a live text label beside Pairs per board, on both Start and replay.</td></tr>
+    <tr><td>10  Four-pair deal corrected</td><td>The same 55 facts now appeared as 13 full four-pair boards and one final triple. The board counter dropped from 15 to 14 in this mode.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="note">The original board already distinguished selected, wrong, and matched cards with lime, red, and pale green states. It also provided text hints, keyboard focus, and reduced-motion support.</p>
+<h2 id="ui-history-through-the-final-edit">UI history through the final edit</h2>
+<div class="table-scroll" role="region" tabindex="0" aria-label="UI history through the final edit table">
+<table>
+  <thead>
+    <tr><th scope="col"><strong>Release step</strong></th><th scope="col"><strong>What changed for the player</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>11  Count inside each option</td><td>After the adjacent label still appeared static, both size menus used complete option labels, such as ‘4 pairs · 14 boards.’ The separate label was removed.</td></tr>
+    <tr><td>12  Prime Match 60</td><td>The page title, start copy, finish total, and board counts reflected 60 facts. The size menu showed 15, 8, or 5 boards for 4, 8, or 12 pairs. The game began using the actual deck total in the finish heading.</td></tr>
+    <tr><td>13  Logo becomes Home</td><td>The wordmark and tile mark became one link to the start screen. It stopped the current timers and returned focus to the start heading. End game remained the control for leaving with a score.</td></tr>
+    <tr><td>14  Four recall checks</td><td>Start and replay replaced the checkbox with Off, 2 per board, and 4 per board, initially defaulting to 2. Four prompts alternated product and factors, updated the prompt counter, and used distinct rising chimes by position.</td></tr>
+    <tr><td>15  Prime Factor 64</td><td>The masthead changed to Prime Factor and the title to Prime Factor 64. The size options became 4, 8, and 16, with 4 the default. The denser card spacing moved to the 16-pair view, and each new board scrolled to the top.</td></tr>
+    <tr><td>16  Separate Boards menu</td><td>Start and replay separated Pairs per board from Boards. The options gave both board count and match count, and the start label became ‘64 multiplication facts.’ The progress and finish totals now reflected the selected session.</td></tr>
+    <tr><td>17  Fresh defaults</td><td>A fresh page opened at 4 pairs, 4 boards, recall Off. Home and Play again kept the last choices until reload. Sound continued to use its separate saved preference.</td></tr>
+    <tr><td>18  Explain a factor guess</td><td>The home page named 21 in 21 × 17 as the factor-limit exception. Recall showed the product of the submitted factors, then gave the target equation when they missed. A correct submission showed the factors in the order entered.</td></tr>
+    <tr><td>19  Victory fanfare</td><td>A six-note climb, sustained chord, and high flourish replaced the short finish cue. It played on completion, or on See score after the last recall check. The same finish path applied to short and full sessions.</td></tr>
+    <tr><td>20  Two lines of feedback</td><td>A wrong factor answer put the entered equation on the first line and the target equation on the second. A correct answer or Show answer continued to display a single message.</td></tr>
+  </tbody>
+</table>
+</div>
+<h2 id="how-the-name-was-chosen">How the name was chosen</h2>
+<p>The working name moved from Prime Match 55 to Prime Match 60 as the deck grew. At 60 facts, Sriram explicitly asked which of four names was more distinctive. ChatGPT’s recommendation at that point was Prime Match 60. The comparison separated memorability, accuracy, and how clearly each name suggested the game mechanic.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-label="How the name was chosen table">
+<table>
+  <thead>
+    <tr><th scope="col"><strong>Name considered</strong></th><th scope="col"><strong>Assessment during the discussion</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Prime Match 60</td><td>ChatGPT’s first choice at 60. ‘Match’ described the interaction, and the number gave the game a specific, memorable identity.</td></tr>
+    <tr><td>Factor Match</td><td>The runner-up and the most literal fit for a mixed deck containing primes and composites.</td></tr>
+    <tr><td>Multiply Match</td><td>The clearest about the arithmetic at a glance. ChatGPT judged it more generic.</td></tr>
+    <tr><td>Prime Factor</td><td>ChatGPT thought this could sound like an exercise in prime factorization when read on its own.</td></tr>
+  </tbody>
+</table>
+</div>
+<h3 id="the-new-deck-changed-the-choice">The new deck changed the choice</h3>
+<p>When the game reached 64 facts, Sriram said, “prime factor 64 has a nice ring to it. go ahead”. His preference settled the decision. The displayed title became Prime Factor 64, while the compact wordmark read Prime Factor. The number also conveyed the size of the practice pool and corresponded to the new 4-, 8-, and 16-pair layouts.</p>
+<p>The last addition, 17 × 21 = 357, gave the deck a fourth result ending in 7, alongside 117, 187, and 247. The new result helped with the shared-ending groups and introduced the exception to the factor limit that Sriram later asked to spell out on the home page.</p>
+<h2 id="other-paths-we-considered">Other paths we considered</h2>
+<p>Some ideas were discussed and set aside before a release. Others were built, played, and then revised. The difference matters when tracing how the decisions were made.</p>
+<h3 id="proposals-that-stayed-on-paper">Proposals that stayed on paper</h3>
+<div class="table-scroll" role="region" tabindex="0" aria-label="Proposals that stayed on paper table">
+<table>
+  <thead>
+    <tr><th scope="col"><strong>Proposed path</strong></th><th scope="col"><strong>Decision and reason</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Build with 39 results</td><td>The first sketch had five boards, four of eight and a final seven. The same two-column game was first released with the larger 55-result deck and seven boards.</td></tr>
+    <tr><td>Stop at 45 results</td><td>Adding just the six difficult even-by-even products would have produced a smaller expansion. The conversation moved to all qualifying composite-by-composite pairs and 55 unique results.</td></tr>
+    <tr><td>Deal both forms of a repeated result</td><td>Sriram ruled this out when discussing the expanded deck. Each result would occupy one slot, with its eligible expressions available as alternatives across games.</td></tr>
+    <tr><td>Turn the forced final match into recall</td><td>ChatGPT proposed hiding the board when one pair remained, using that pair as the first existing recall prompt and a missed or slow pair as the second. Sriram accepted the last match by elimination and asked to group the finished cards instead.</td></tr>
+    <tr><td>Trade 15² for 18²</td><td>This would keep the deck at 60, replace the familiar 225 with 324, and require a small ending-group adjustment. Sriram then chose to keep 15² and add 14², 16², and 18², bringing the deck to 63 before the last addition.</td></tr>
+  </tbody>
+</table>
+</div>
+<h3 id="shipped-approaches-that-gave-way">Shipped approaches that gave way</h3>
+<p>The free shuffle gave way to shared endings. The 15-board four-pair deal at 55 kept at least two cards per ending but left four short boards. The 14-board correction allowed one unique ending to pack the deck more tightly. At 60, the 15-board count returned with every board full.</p>
+<p>The adjacent board-count label gave way to labels inside the dropdown, then to a separate Boards menu with selectable run lengths. The 12-pair layout yielded to the 16-pair layout after the move to 64. The game also moved from a two-check checkbox and saved setup choices to a three-option recall menu and defaults that reset on reload.</p>
+<h2 id="the-64-results-in-the-final-deck">The 64 results in the final deck</h2>
+<p>The base deck uses distinct factors from 3 through 19, skips 10, and keeps results greater than 100. The eight selected squares and 357 complete the deck. This table shows one eligible factor pair per result.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-label="The 64 results in the final deck table">
+<table>
+  <thead>
+    <tr><th scope="col" class="numeric"><strong>102–136</strong></th><th scope="col" class="numeric"><strong>143–192</strong></th><th scope="col" class="numeric"><strong>195–247</strong></th><th scope="col" class="numeric"><strong>252–361</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="numeric">102 = 6 × 17</td><td class="numeric">143 = 11 × 13</td><td class="numeric">195 = 13 × 15</td><td class="numeric">252 = 14 × 18</td></tr>
+    <tr><td class="numeric">104 = 8 × 13</td><td class="numeric">144 = 8 × 18</td><td class="numeric">196 = 14 × 14</td><td class="numeric">255 = 15 × 17</td></tr>
+    <tr><td class="numeric">105 = 7 × 15</td><td class="numeric">152 = 8 × 19</td><td class="numeric">198 = 11 × 18</td><td class="numeric">256 = 16 × 16</td></tr>
+    <tr><td class="numeric">108 = 6 × 18</td><td class="numeric">153 = 9 × 17</td><td class="numeric">204 = 12 × 17</td><td class="numeric">266 = 14 × 19</td></tr>
+    <tr><td class="numeric">112 = 7 × 16</td><td class="numeric">154 = 11 × 14</td><td class="numeric">208 = 13 × 16</td><td class="numeric">270 = 15 × 18</td></tr>
+    <tr><td class="numeric">114 = 6 × 19</td><td class="numeric">156 = 12 × 13</td><td class="numeric">209 = 11 × 19</td><td class="numeric">272 = 16 × 17</td></tr>
+    <tr><td class="numeric">117 = 9 × 13</td><td class="numeric">162 = 9 × 18</td><td class="numeric">210 = 14 × 15</td><td class="numeric">285 = 15 × 19</td></tr>
+    <tr><td class="numeric">119 = 7 × 17</td><td class="numeric">165 = 11 × 15</td><td class="numeric">216 = 12 × 18</td><td class="numeric">288 = 16 × 18</td></tr>
+    <tr><td class="numeric">120 = 8 × 15</td><td class="numeric">168 = 12 × 14</td><td class="numeric">221 = 13 × 17</td><td class="numeric">289 = 17 × 17</td></tr>
+    <tr><td class="numeric">121 = 11 × 11</td><td class="numeric">169 = 13 × 13</td><td class="numeric">224 = 14 × 16</td><td class="numeric">304 = 16 × 19</td></tr>
+    <tr><td class="numeric">126 = 7 × 18</td><td class="numeric">171 = 9 × 19</td><td class="numeric">225 = 15 × 15</td><td class="numeric">306 = 17 × 18</td></tr>
+    <tr><td class="numeric">128 = 8 × 16</td><td class="numeric">176 = 11 × 16</td><td class="numeric">228 = 12 × 19</td><td class="numeric">323 = 17 × 19</td></tr>
+    <tr><td class="numeric">132 = 11 × 12</td><td class="numeric">180 = 12 × 15</td><td class="numeric">234 = 13 × 18</td><td class="numeric">324 = 18 × 18</td></tr>
+    <tr><td class="numeric">133 = 7 × 19</td><td class="numeric">182 = 13 × 14</td><td class="numeric">238 = 14 × 17</td><td class="numeric">342 = 18 × 19</td></tr>
+    <tr><td class="numeric">135 = 9 × 15</td><td class="numeric">187 = 11 × 17</td><td class="numeric">240 = 15 × 16</td><td class="numeric">357 = 17 × 21</td></tr>
+    <tr><td class="numeric">136 = 8 × 17</td><td class="numeric">192 = 12 × 16</td><td class="numeric">247 = 13 × 19</td><td class="numeric">361 = 19 × 19</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="note">The additional factor pairs are 9 × 12 for 108, 8 × 14 for 112, 9 × 14 for 126, and 9 × 16 for 144.</p>
+<p>The final four-pair layout uses two shared-ending pairs on 14 boards and a triple plus a singleton on two. In the eight- and sixteen-pair layouts, every ending used on a board has at least two cards.</p>
+<h3 id="project-record">Project record</h3>
+<p>This chronology follows the project conversation from the first multiplication table through the final factor-recall edit. The saved Prime Match 55, Prime Match 60, and Prime Factor 64 versions record the implementation changes. The counts and equations were checked against the deck rules. The final game and its standalone source are linked at the end of the main narrative.</p>
+<h2 id="technical-version-log">Technical version log</h2>
+<p>Each row corresponds to a saved version of the game, in release order. The first number matches the UI history. The short commit ID identifies the source used for each count.</p>
+<p class="note">LOC counts physical lines, including blanks and comments, in the saved index.html. CSS and JS count the lines inside the style and script tags. HTML counts the remaining lines, including those tags. Total is the sum of all three.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-label="Technical version log table">
+<table class="wide-table">
+  <thead>
+    <tr><th scope="col" class="numeric"><strong>Version</strong></th><th scope="col" class="numeric"><strong>HTML</strong></th><th scope="col" class="numeric"><strong>CSS</strong></th><th scope="col" class="numeric"><strong>JS</strong></th><th scope="col" class="numeric"><strong>Total</strong></th><th scope="col"><strong>Key change</strong></th><th scope="col"><strong>Technical change</strong></th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="numeric">01<br>ef48a00</td><td class="numeric">79</td><td class="numeric">210</td><td class="numeric">233</td><td class="numeric">522</td><td>First playable 55-result game</td><td>Keyed the deck by result. Picked one eligible expression per result and shuffled the two columns independently.</td></tr>
+    <tr><td class="numeric">02<br>71185bc</td><td class="numeric">79</td><td class="numeric">210</td><td class="numeric">248</td><td class="numeric">537</td><td>Shared last digits</td><td>Bucketed results by units digit and combined groups to fill boards with no singleton endings.</td></tr>
+    <tr><td class="numeric">03<br>cd42e40</td><td class="numeric">86</td><td class="numeric">230</td><td class="numeric">290</td><td class="numeric">606</td><td>Pause and Resume</td><td>Tracked paused time and the remaining delay for a pending board advance.</td></tr>
+    <tr><td class="numeric">04<br>bcb0e3f</td><td class="numeric">89</td><td class="numeric">233</td><td class="numeric">382</td><td class="numeric">704</td><td>Match and progress sounds</td><td>Synthesized cues with Web Audio oscillators and gain envelopes. Saved the Sound setting locally.</td></tr>
+    <tr><td class="numeric">05<br>264322b</td><td class="numeric">116</td><td class="numeric">279</td><td class="numeric">535</td><td class="numeric">930</td><td>Recall checks and early scoring</td><td>Ranked missed and slower pairs for recall. Scored submitted answers separately and excluded recall time from the stopwatch.</td></tr>
+    <tr><td class="numeric">06<br>a6ece5c</td><td class="numeric">116</td><td class="numeric">286</td><td class="numeric">537</td><td class="numeric">939</td><td>Matched cards grouped above</td><td>Moved the two locked card buttons into the same completed row using the match count.</td></tr>
+    <tr><td class="numeric">07<br>bf36145</td><td class="numeric">119</td><td class="numeric">286</td><td class="numeric">537</td><td class="numeric">942</td><td>Four-tile logo</td><td>Replaced the multiplication stroke with four rounded rectangles in the inline SVG.</td></tr>
+    <tr><td class="numeric">08<br>fc6fc8d</td><td class="numeric">135</td><td class="numeric">297</td><td class="numeric">578</td><td class="numeric">1010</td><td>Four, eight, or twelve pairs</td><td>Defined a board layout for each size and applied denser CSS in twelve-pair mode.</td></tr>
+    <tr><td class="numeric">09<br>5e88cb6</td><td class="numeric">137</td><td class="numeric">299</td><td class="numeric">579</td><td class="numeric">1015</td><td>Board count beside the selector</td><td>Updated both live count labels from the same selected layout.</td></tr>
+    <tr><td class="numeric">10<br>663b335</td><td class="numeric">137</td><td class="numeric">299</td><td class="numeric">586</td><td class="numeric">1022</td><td>Four-pair mode fits 14 boards</td><td>Reserved the final triple first and allowed one singleton ending in the full boards.</td></tr>
+    <tr><td class="numeric">11<br>0c602c2</td><td class="numeric">135</td><td class="numeric">299</td><td class="numeric">586</td><td class="numeric">1020</td><td>Counts move into size options</td><td>Put each count in its option label and read the selected size from the panel that starts the game.</td></tr>
+    <tr><td class="numeric">12<br>8c00efb</td><td class="numeric">135</td><td class="numeric">299</td><td class="numeric">590</td><td class="numeric">1024</td><td>Prime Match 60</td><td>Added five fixed squares. Updated the layout templates and derived the completion total from the deck.</td></tr>
+    <tr><td class="numeric">13<br>e7e8fd7</td><td class="numeric">135</td><td class="numeric">309</td><td class="numeric">607</td><td class="numeric">1051</td><td>Logo links to Home</td><td>Reused timer cleanup on exit. Muted active audio and restored focus to the intro heading.</td></tr>
+    <tr><td class="numeric">14<br>abd56a7</td><td class="numeric">143</td><td class="numeric">307</td><td class="numeric">618</td><td class="numeric">1068</td><td>Off, two, or four recall checks</td><td>Alternated prompt direction by position and assigned a different correct-answer cue to each position.</td></tr>
+    <tr><td class="numeric">15<br>651b3cd</td><td class="numeric">143</td><td class="numeric">307</td><td class="numeric">613</td><td class="numeric">1063</td><td>Prime Factor 64</td><td>Added three squares and 357. Built equal boards for 4, 8, and 16 pairs and scrolled each new board to the top.</td></tr>
+    <tr><td class="numeric">16<br>7a1a446</td><td class="numeric">155</td><td class="numeric">307</td><td class="numeric">646</td><td class="numeric">1108</td><td>Independent session length</td><td>Mapped 16, 32, 48, or 64 matches to whole boards and used the chosen run for progress and scoring.</td></tr>
+    <tr><td class="numeric">17<br>1ad77c3</td><td class="numeric">155</td><td class="numeric">307</td><td class="numeric">621</td><td class="numeric">1083</td><td>Setup resets on reload</td><td>Kept setup in page memory and set autocomplete off on the menus. Sound still used local storage.</td></tr>
+    <tr><td class="numeric">18<br>fae08c1</td><td class="numeric">156</td><td class="numeric">307</td><td class="numeric">627</td><td class="numeric">1090</td><td>Show the entered product</td><td>Multiplied the two submitted factors for feedback and kept the correct equation available after a miss.</td></tr>
+    <tr><td class="numeric">19<br>45d71e4</td><td class="numeric">156</td><td class="numeric">307</td><td class="numeric">643</td><td class="numeric">1106</td><td>Victory fanfare</td><td>Centralized the completion trigger. Scheduled overlapping notes and waited for audio to resume when needed.</td></tr>
+    <tr><td class="numeric">20<br>6b97255</td><td class="numeric">156</td><td class="numeric">307</td><td class="numeric">643</td><td class="numeric">1106</td><td>Two-line factor feedback</td><td>Inserted a newline and used CSS pre-line spacing to preserve it inside the status message.</td></tr>
+  </tbody>
+</table>
+</div>
+      <p class="back"><a href="index.html">Back to project home</a></p>
+    </article>
+  </div>
+</main>
+</body>
+</html>

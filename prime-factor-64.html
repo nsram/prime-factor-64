@@ -1,0 +1,1116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f4ed">
+<meta name="description" content="A timed mental math game. Match 64 multiplication expressions to their results.">
+<title>Prime Factor 64</title>
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #f5f4ed;
+    --white: #fffefa;
+    --ink: #182c25;
+    --muted: #52665a;
+    --line: #d6ddd1;
+    --forest: #173d30;
+    --lime: #dcf3a8;
+    --success: #e4efdd;
+    --error: #a13228;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; min-width: 280px; }
+  button { font: inherit; color: inherit; }
+  button:not(:disabled) { cursor: pointer; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, h1:focus-visible, h2:focus-visible {
+    outline: 3px solid #54772a;
+    outline-offset: 3px;
+  }
+
+  .shell { width: min(100% - 32px, 660px); margin: 0 auto; }
+  .masthead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 66px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    color: inherit;
+    font-weight: 780;
+    letter-spacing: -.03em;
+    text-decoration: none;
+  }
+  .project-home {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--forest);
+    font-size: .82rem;
+    font-weight: 700;
+    text-underline-offset: .22em;
+    white-space: nowrap;
+  }
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    color: var(--lime);
+    background: var(--forest);
+  }
+  .masthead-note, .eyebrow, .column h2, .stat-label {
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: .7rem;
+    font-weight: 760;
+    letter-spacing: .1em;
+  }
+
+  .panel {
+    margin: clamp(26px, 7vw, 56px) 0 28px;
+    padding: clamp(24px, 6vw, 46px);
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: 0 9px 30px #182c250b;
+  }
+  .intro { position: relative; overflow: hidden; }
+  .intro::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: var(--lime);
+  }
+  .eyebrow { margin: 0 0 12px; }
+  h1, .finish h2 {
+    margin: 0;
+    font-size: clamp(2.7rem, 8vw, 5rem);
+    font-weight: 800;
+    letter-spacing: -.085em;
+    line-height: .98;
+  }
+  h1 span { color: #476e3d; }
+  .intro p:not(.eyebrow), .finish-summary {
+    margin: 18px 0 22px;
+    color: var(--muted);
+    max-width: 36ch;
+    line-height: 1.5;
+  }
+  .example {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 0 25px;
+    padding: 9px 12px;
+    border-radius: 11px;
+    background: var(--success);
+    color: var(--forest);
+    font-weight: 750;
+    font-variant-numeric: tabular-nums;
+  }
+  .example span { color: var(--muted); }
+  .action {
+    display: block;
+    min-height: 48px;
+    padding: 0 22px;
+    border: 1px solid var(--forest);
+    border-radius: 11px;
+    background: var(--forest);
+    color: #fffefa;
+    font-weight: 750;
+  }
+  .game-setting {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: fit-content;
+    min-height: 44px;
+    margin: 0 0 12px;
+    font-size: .9rem;
+    font-weight: 680;
+  }
+  .game-setting label, .game-setting select { cursor: pointer; }
+  .game-setting { flex-wrap: wrap; }
+  .game-setting select {
+    min-height: 44px;
+    max-width: 100%;
+    padding: 0 8px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--white);
+    color: var(--ink);
+    font: inherit;
+  }
+  @media (hover: hover) {
+    .brand:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .action:hover { background: #255443; }
+    .control-button:hover { border-color: #799477; }
+    .card:not(:disabled):not(.selected):hover { border-color: #799477; }
+  }
+
+  .play { padding: 12px 0 18px; }
+  .hud {
+    position: sticky;
+    z-index: 1;
+    top: 0;
+    padding: 9px 0 10px;
+    background: var(--paper);
+  }
+  .scorebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--forest);
+    border-radius: 13px;
+    color: #fffefa;
+    font-variant-numeric: tabular-nums;
+  }
+  .scorebar strong { color: var(--lime); }
+  .scorebar span { font-size: .85rem; }
+  .clock { min-width: 3ch; text-align: end; font-size: 1.03rem; }
+  .segments { display: flex; gap: 4px; padding-top: 8px; }
+  .segments span { flex: 1; height: 4px; border-radius: 2px; background: #dce2d6; }
+  .segments .current { background: #759866; }
+  .segments .done { background: var(--forest); }
+
+  .game-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .feedback {
+    margin: 0;
+    color: var(--muted);
+    font-size: .85rem;
+    font-weight: 650;
+  }
+  .feedback[data-tone="wrong"] { color: var(--error); }
+  .feedback[data-tone="correct"] { color: var(--forest); }
+  .game-buttons { display: flex; gap: 6px; margin-left: auto; }
+  .control-button {
+    min-width: 76px;
+    min-height: 44px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--white);
+    font-size: .85rem;
+    font-weight: 750;
+    white-space: nowrap;
+  }
+  #sound { min-width: 84px; }
+  #sound[aria-pressed="true"] { background: var(--success); }
+  #end-game { color: var(--muted); }
+  .paused { margin-top: 8px; text-align: center; }
+  .paused h2 { margin: 0; }
+  .paused p { margin: 8px 0 0; color: var(--muted); }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(10px, 3vw, 20px);
+  }
+  .column h2 { margin: 0 0 8px 3px; }
+  .cards { display: grid; gap: 6px; }
+  .card {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    min-height: clamp(45px, 6vw, 55px);
+    padding: 4px 22px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--white);
+    font-size: clamp(1.16rem, 4vw, 1.45rem);
+    font-weight: 725;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    white-space: nowrap;
+    transition: background-color 100ms, border-color 100ms;
+  }
+  .card.selected { background: var(--lime); border-color: #54772a; }
+  .card.matched {
+    min-height: 34px;
+    background: var(--success);
+    border-color: #d2dfcc;
+    color: #405c49;
+    font-size: 1rem;
+  }
+  .card.matched::after {
+    content: "✓";
+    position: absolute;
+    right: 8px;
+    font-size: .85rem;
+  }
+  .card.matched + .card:not(.matched) { margin-top: 5px; }
+  .card.wrong { background: #faeae5; border-color: #b7584b; color: var(--error); }
+  .board[data-size="16"] .cards { gap: 4px; }
+  .board[data-size="16"] .card:not(.matched) { min-height: 44px; }
+
+  .recall { margin-top: 8px; }
+  .recall h2 {
+    margin: 0 0 14px;
+    font-size: clamp(1.8rem, 6vw, 3rem);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.04em;
+  }
+  .recall-instruction { margin: 0 0 16px; color: var(--muted); }
+  .recall-inputs, .recall-actions { display: flex; align-items: center; gap: 8px; }
+  .recall-actions { flex-wrap: wrap; }
+  .recall-inputs input {
+    width: 5ch;
+    min-height: 48px;
+    padding: 5px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--white);
+    color: var(--ink);
+    font: inherit;
+    font-size: 1.35rem;
+    font-weight: 700;
+    text-align: center;
+  }
+  .recall-answer { min-height: 1.4em; margin: 10px 0; font-weight: 700; color: var(--forest); white-space: pre-line; }
+  .finish h2 { font-size: clamp(2.45rem, 8vw, 4.6rem); }
+  .finish-summary { margin: 14px 0 19px; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 24px;
+  }
+  .stats[data-recall="true"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .stat { padding: 11px 8px; border: 1px solid var(--line); border-radius: 11px; text-align: center; }
+  .stat strong { display: block; font-size: clamp(1.25rem, 4.7vw, 1.85rem); font-variant-numeric: tabular-nums; }
+  .stat-label { display: block; margin-top: 3px; }
+  .review { margin: 24px 0 0; }
+  .review h3 { margin: 0 0 5px; font-size: 1rem; }
+  .review p { margin: 0 0 9px; color: var(--muted); font-size: .85rem; }
+  .review ul { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
+  .review li { padding: 5px 9px; border-radius: 6px; background: var(--success); font-size: .88rem; font-weight: 650; }
+
+  @media (max-width: 480px) {
+    .game-controls { flex-wrap: wrap; gap: 4px; }
+    .feedback { flex-basis: 100%; order: 1; }
+    .game-buttons { gap: 4px; }
+    .game-buttons .control-button { min-width: 0; padding-inline: 8px; }
+    .stats[data-recall="true"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 400px) {
+    .shell { width: calc(100% - 24px); }
+    .masthead { min-height: 52px; }
+    .play { padding-top: 5px; }
+    .scorebar { padding-inline: 9px; }
+    .scorebar span { font-size: .77rem; }
+    .cards { gap: 5px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="masthead">
+    <a id="home" class="brand" href="#intro" aria-label="Prime Factor 64 home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="17" height="17" viewBox="0 0 20 20" fill="currentColor">
+          <rect x="2.5" y="2.5" width="6.5" height="6.5" rx="1.4"/>
+          <rect x="11" y="2.5" width="6.5" height="6.5" rx="1.4"/>
+          <rect x="2.5" y="11" width="6.5" height="6.5" rx="1.4"/>
+          <rect x="11" y="11" width="6.5" height="6.5" rx="1.4"/>
+        </svg>
+      </span>
+      Prime Factor 64
+    </a>
+    <a class="project-home" href="index.html">Project home</a>
+  </header>
+
+  <main>
+    <section class="panel intro" id="intro">
+      <p class="eyebrow">64 multiplication facts</p>
+      <h1 id="intro-title" tabindex="-1">Prime Factor <span>64</span></h1>
+      <p>Pair each multiplication expression with its result. Start on either side and see how quickly you can clear the boards.</p>
+      <p>Every factor is 19 or less, except for 21 in 21 × 17.</p>
+      <div class="example" aria-label="Example. 13 times 17 matches 221.">13 × 17 <span aria-hidden="true">↔</span> 221</div>
+      <div class="game-setting">
+        <label for="start-board-size">Pairs per board</label>
+        <select id="start-board-size" class="size-option" autocomplete="off">
+          <option value="4" selected>4 pairs</option>
+          <option value="8">8 pairs</option>
+          <option value="16">16 pairs</option>
+        </select>
+      </div>
+      <div class="game-setting">
+        <label for="start-board-count">Boards</label>
+        <select id="start-board-count" class="board-count-option" autocomplete="off">
+          <option value="16" selected>4 boards · 16 matches</option>
+        </select>
+      </div>
+      <div class="game-setting">
+        <label for="start-recall-count">Recall checks</label>
+        <select id="start-recall-count" class="recall-option" autocomplete="off">
+          <option value="0" selected>Off</option>
+          <option value="2">2 per board</option>
+          <option value="4">4 per board</option>
+        </select>
+      </div>
+      <button class="action" id="start" type="button">Start game</button>
+    </section>
+
+    <section class="play" id="play" aria-label="Matching game" hidden>
+      <div class="hud">
+        <div class="scorebar">
+          <span id="board-number"></span>
+          <span id="progress"></span>
+          <time id="clock" class="clock" aria-label="Elapsed time">0:00</time>
+        </div>
+        <div class="segments" id="segments" aria-hidden="true"></div>
+        <div class="game-controls">
+          <p class="feedback" id="feedback" role="status"></p>
+          <div class="game-buttons">
+            <button class="control-button" id="end-game" type="button">End game</button>
+            <button class="control-button" id="sound" type="button" aria-pressed="true">Sound <span id="sound-state" aria-hidden="true">on</span></button>
+            <button class="control-button" id="pause" type="button" aria-controls="board recall">Pause</button>
+          </div>
+        </div>
+      </div>
+      <div class="board" id="board">
+        <section class="column" aria-labelledby="expressions-title">
+          <h2 id="expressions-title">Expressions</h2>
+          <div class="cards" id="expressions"></div>
+        </section>
+        <section class="column" aria-labelledby="results-title">
+          <h2 id="results-title">Results</h2>
+          <div class="cards" id="results"></div>
+        </section>
+      </div>
+      <section class="panel recall" id="recall" aria-labelledby="recall-title" hidden>
+        <p class="eyebrow" id="recall-step"></p>
+        <h2 id="recall-title" tabindex="-1"></h2>
+        <p class="recall-instruction" id="recall-instruction"></p>
+        <form id="recall-form" autocomplete="off">
+          <div class="recall-inputs">
+            <input id="recall-first" inputmode="numeric" pattern="[0-9]+" maxlength="3" aria-label="Product" required>
+            <span id="recall-times" aria-hidden="true">×</span>
+            <input id="recall-second" inputmode="numeric" pattern="[0-9]+" maxlength="2" aria-label="Second factor" required>
+          </div>
+          <p class="recall-answer" id="recall-answer" role="status"></p>
+          <div class="recall-actions">
+            <button class="action" id="recall-next" type="submit">Check answer</button>
+            <button class="control-button" id="recall-reveal" type="button">Show answer</button>
+          </div>
+        </form>
+      </section>
+      <div class="panel paused" id="paused-message" role="status" hidden>
+        <h2>Game paused</h2>
+        <p>Resume when you’re ready.</p>
+      </div>
+    </section>
+
+    <section class="panel finish" id="finish" hidden>
+      <p class="eyebrow" id="finish-label">Game complete</p>
+      <h2 id="finish-title" tabindex="-1">All matched.</h2>
+      <p class="finish-summary" id="finish-summary"></p>
+      <div class="stats" id="finish-stats">
+        <div class="stat"><strong id="final-matches"></strong><span class="stat-label">Matched</span></div>
+        <div class="stat"><strong id="final-time"></strong><span class="stat-label">Elapsed</span></div>
+        <div class="stat"><strong id="final-accuracy"></strong><span class="stat-label">First try</span></div>
+        <div class="stat" id="recall-stat" hidden><strong id="final-recall"></strong><span class="stat-label">Recall</span></div>
+      </div>
+      <div class="game-setting">
+        <label for="replay-board-size">Pairs per board</label>
+        <select id="replay-board-size" class="size-option" autocomplete="off">
+          <option value="4" selected>4 pairs</option>
+          <option value="8">8 pairs</option>
+          <option value="16">16 pairs</option>
+        </select>
+      </div>
+      <div class="game-setting">
+        <label for="replay-board-count">Boards</label>
+        <select id="replay-board-count" class="board-count-option" autocomplete="off">
+          <option value="16" selected>4 boards · 16 matches</option>
+        </select>
+      </div>
+      <div class="game-setting">
+        <label for="replay-recall-count">Recall checks</label>
+        <select id="replay-recall-count" class="recall-option" autocomplete="off">
+          <option value="0" selected>Off</option>
+          <option value="2">2 per board</option>
+          <option value="4">4 per board</option>
+        </select>
+      </div>
+      <button class="action" id="replay" type="button">Play again</button>
+      <section class="review" id="review" hidden>
+        <h3>Pairs to review</h3>
+        <p>A wrong guess counts against the pair you started from.</p>
+        <ul id="review-list"></ul>
+      </section>
+    </section>
+  </main>
+</div>
+
+<script>
+  "use strict";
+
+  function buildDeck() {
+    const byResult = new Map();
+
+    // Use distinct factors from 3 through 19, excluding 10.
+    for (let first = 3; first <= 19; first++) {
+      if (first === 10) continue;
+
+      for (let second = first + 1; second <= 19; second++) {
+        const result = first * second;
+        if (second === 10 || result <= 100) continue;
+
+        if (!byResult.has(result)) byResult.set(result, []);
+        byResult.get(result).push([first, second]);
+      }
+    }
+
+    for (const factor of [11, 13, 14, 15, 16, 17, 18, 19]) {
+      byResult.set(factor * factor, [[factor, factor]]);
+    }
+    byResult.set(357, [[17, 21]]);
+
+    return byResult;
+  }
+
+  function shuffle(items) {
+    const shuffled = [...items];
+
+    for (let index = shuffled.length - 1; index > 0; index--) {
+      const swap = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[swap]] = [shuffled[swap], shuffled[index]];
+    }
+
+    return shuffled;
+  }
+
+  // Each layout lists the sizes of the same-ending groups on each board.
+  const boardLayouts = {
+    4: [...Array.from({ length: 14 }, () => [2, 2]), [3, 1], [3, 1]],
+    8: [[5, 3], [3, 3, 2], [3, 3, 2], ...Array.from({ length: 5 }, () => [4, 4])],
+    16: [[5, 3, 4, 4], [4, 3, 3, 2, 4], [4, 3, 3, 2, 4], [4, 4, 4, 4]]
+  };
+
+  function dealBoards(deck, boardSize) {
+    const resultsByEnding = Array.from({ length: 10 }, () => []);
+    for (const entry of deck) resultsByEnding[entry[0] % 10].push(entry);
+
+    // Four endings have odd counts. The 4-pair layout uses two
+    // triples and two singles to keep every board full.
+    const singleCardBuckets = boardSize === 4
+      ? shuffle(resultsByEnding.filter(bucket => bucket.length % 2 === 1)).slice(0, 2)
+      : [];
+    const splitSizes = { 7: [3, 4], 8: [4, 4], 9: [3, 4, 2], 10: [3, 3, 4] };
+    const groupsBySize = Array.from({ length: 6 }, () => []);
+    for (const bucket of resultsByEnding) {
+      const entries = shuffle(bucket);
+      let sizes = splitSizes[entries.length] ?? [entries.length];
+      if (boardSize === 4) {
+        const sizeForOddBucket = singleCardBuckets.includes(bucket) ? 1 : 3;
+        const oddGroupSize = entries.length % 2 ? sizeForOddBucket : 0;
+        sizes = Array((entries.length - oddGroupSize) / 2).fill(2);
+        if (oddGroupSize) sizes.push(oddGroupSize);
+      }
+      for (const size of sizes) {
+        groupsBySize[size].push(entries.splice(0, size));
+      }
+    }
+
+    const groups = groupsBySize.map(shuffle);
+    return shuffle(boardLayouts[boardSize]).map(sizes => {
+      const entries = sizes.flatMap(size => groups[size].pop());
+      return entries.map(([result, options]) => {
+        const factors = [...options[Math.floor(Math.random() * options.length)]];
+        if (Math.random() < .5) factors.reverse();
+
+        return { result, factors };
+      });
+    });
+  }
+
+  function formatTime(milliseconds) {
+    const seconds = Math.floor(milliseconds / 1000);
+    return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
+  }
+
+  const deck = buildDeck();
+  const intro = document.querySelector("#intro");
+  const play = document.querySelector("#play");
+  const finish = document.querySelector("#finish");
+  const boardNumber = document.querySelector("#board-number");
+  const progress = document.querySelector("#progress");
+  const clock = document.querySelector("#clock");
+  const segments = document.querySelector("#segments");
+  const feedback = document.querySelector("#feedback");
+  const board = document.querySelector("#board");
+  const pauseButton = document.querySelector("#pause");
+  const pausedMessage = document.querySelector("#paused-message");
+  const soundButton = document.querySelector("#sound");
+  const soundState = document.querySelector("#sound-state");
+  const sizeOptions = document.querySelectorAll(".size-option");
+  const boardCountOptions = document.querySelectorAll(".board-count-option");
+  const recallOptions = document.querySelectorAll(".recall-option");
+  const recall = document.querySelector("#recall");
+  const recallTitle = document.querySelector("#recall-title");
+  const recallForm = document.querySelector("#recall-form");
+  const recallFirst = document.querySelector("#recall-first");
+  const recallSecond = document.querySelector("#recall-second");
+  const recallNext = document.querySelector("#recall-next");
+  const recallReveal = document.querySelector("#recall-reveal");
+  const recallAnswer = document.querySelector("#recall-answer");
+  const columns = {
+    expression: document.querySelector("#expressions"),
+    result: document.querySelector("#results")
+  };
+
+  let boards;
+  let boardIndex;
+  let boardMatches;
+  let total;
+  let matched;
+  let attempted;
+  let missed;
+  let selected;
+  let selectedAt;
+  let matchDurations;
+  let wrongCards;
+  let advanceAt;
+  let advanceSide;
+  let advanceTimer;
+  let startedAt;
+  let pausedAt;
+  let timer;
+
+  let boardSize = 4;
+  const sessionLengths = [16, 32, 48, 64];
+  let sessionMatches = sessionLengths[0];
+
+  let recallCount = 0;
+  let recallStartedAt;
+  let recallPairs;
+  let recallIndex;
+  let recallAnswered;
+  let recallAttempts;
+  let recallCorrect;
+
+  const soundPreferenceKey = "prime-match-55:sound";
+  const notesByCue = {
+    match: [[680, .075]],
+    miss: [[220, .095]],
+    board: [[659.25, .09], [783.99, .13]],
+    recall1: [[440, .07], [554.37, .12]],
+    recall2: [[493.88, .07], [622.25, .12]],
+    recall3: [[554.37, .07], [698.46, .12]],
+    recall4: [[659.25, .07], [830.61, .12]],
+    // Frequency, duration, offset, and peak gain. The last notes form a chord.
+    finish: [
+      [523.25, .16, 0, .15], [659.25, .16, .11, .15], [783.99, .17, .22, .15],
+      [1046.5, .21, .34, .15], [1318.51, .21, .49, .14], [1567.98, .24, .61, .13],
+      [261.63, .98, .78, .16], [523.25, .93, .78, .14], [659.25, .87, .78, .11],
+      [783.99, .88, .78, .11], [1046.5, .83, .78, .13], [2093, .50, .93, .06]
+    ]
+  };
+  let soundEnabled = true;
+  let audioContext;
+  let soundOutput;
+
+  try {
+    soundEnabled = localStorage.getItem(soundPreferenceKey) !== "off";
+  } catch {
+    // Sound can still be toggled when browser storage is unavailable.
+  }
+
+  function updateSizeControls() {
+    for (const option of sizeOptions) option.value = String(boardSize);
+    for (const select of boardCountOptions) {
+      select.replaceChildren(...sessionLengths.map(matches => {
+        const option = document.createElement("option");
+        const count = matches / boardSize;
+        option.value = String(matches);
+        option.textContent = count + (count === 1 ? " board" : " boards") + " · " + matches + " matches";
+        return option;
+      }));
+      select.value = String(sessionMatches);
+    }
+  }
+
+  function setBoardSize(value) {
+    const size = Number(value);
+    if (size === boardSize) return;
+    boardSize = size;
+    updateSizeControls();
+  }
+
+  function setSessionMatches(value) {
+    const matches = Number(value);
+    if (matches === sessionMatches) return;
+    sessionMatches = matches;
+    for (const select of boardCountOptions) select.value = value;
+  }
+
+  function setRecallCount(value) {
+    const count = Number(value);
+    if (count === recallCount) return;
+    recallCount = count;
+    for (const option of recallOptions) option.value = value;
+  }
+
+  function updateSoundControl() {
+    soundButton.setAttribute("aria-pressed", String(soundEnabled));
+    soundState.textContent = soundEnabled ? "on" : "off";
+  }
+
+  function updateSoundOutput() {
+    if (soundOutput) soundOutput.gain.value = soundEnabled && pausedAt === null ? 1 : 0;
+  }
+
+  function prepareAudio() {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!soundEnabled || pausedAt !== null || !AudioContext) return;
+    try {
+      if (!audioContext) {
+        const context = new AudioContext();
+        soundOutput = context.createGain();
+        soundOutput.connect(context.destination);
+        audioContext = context;
+      }
+      if (audioContext.state !== "running") return audioContext.resume().catch(() => {});
+    } catch {
+      // Audio is optional if the browser blocks playback.
+    }
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    updateSoundControl();
+    updateSoundOutput();
+    if (soundEnabled) prepareAudio();
+    try {
+      localStorage.setItem(soundPreferenceKey, soundEnabled ? "on" : "off");
+    } catch {
+      // The setting remains in effect for this page.
+    }
+  }
+
+  async function playCue(cue) {
+    const resuming = prepareAudio();
+    if (cue === "finish" && resuming) {
+      const completedBoards = boards;
+      await resuming;
+      if (finish.hidden || boards !== completedBoards) return;
+    }
+    if (!soundEnabled || pausedAt !== null || audioContext?.state !== "running") return;
+
+    try {
+      const cueStart = audioContext.currentTime + .01;
+      let nextStart = cueStart;
+      for (const [frequency, duration, offset, peak = .1] of notesByCue[cue]) {
+        const start = offset === undefined ? nextStart : cueStart + offset;
+        const end = start + duration;
+        const oscillator = audioContext.createOscillator();
+        const envelope = audioContext.createGain();
+        if (cue === "finish") oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(frequency, start);
+        if (cue === "match") oscillator.frequency.exponentialRampToValueAtTime(frequency * .7, end);
+        envelope.gain.setValueAtTime(0, start);
+        envelope.gain.linearRampToValueAtTime(peak, start + .006);
+        if (cue === "finish" && duration > .5) {
+          envelope.gain.exponentialRampToValueAtTime(peak * .35, start + duration * .45);
+        }
+        envelope.gain.exponentialRampToValueAtTime(.001, end);
+        oscillator.connect(envelope);
+        envelope.connect(soundOutput);
+        oscillator.onended = () => envelope.disconnect();
+        oscillator.start(start);
+        oscillator.stop(end);
+        nextStart = end + .025;
+      }
+    } catch {
+      // Sound failures must not interrupt a match.
+    }
+  }
+
+  function showFeedback(message, tone = "") {
+    feedback.textContent = message;
+    feedback.dataset.tone = tone;
+  }
+
+  function updateProgress() {
+    progress.innerHTML = "<strong>" + matched + "/" + total + "</strong> matched";
+  }
+
+  function updateClock(milliseconds) {
+    const display = formatTime(milliseconds);
+    if (clock.textContent !== display) clock.textContent = display;
+    clock.dateTime = "PT" + Math.floor(milliseconds / 1000) + "S";
+  }
+
+  function elapsedTime() {
+    return (recallStartedAt ?? pausedAt ?? performance.now()) - startedAt;
+  }
+
+  function tickClock() {
+    updateClock(elapsedTime());
+  }
+
+  function updateGameView() {
+    const paused = pausedAt !== null;
+    const recalling = recallStartedAt !== null;
+    pauseButton.textContent = paused ? "Resume" : "Pause";
+    board.hidden = paused || recalling;
+    feedback.hidden = paused || recalling;
+    recall.hidden = paused || !recalling;
+    pausedMessage.hidden = !paused;
+    updateSoundOutput();
+  }
+
+  function togglePause() {
+    const now = performance.now();
+    if (pausedAt === null) {
+      pausedAt = now;
+      window.clearInterval(timer);
+      if (advanceAt !== null) window.clearTimeout(advanceTimer);
+      tickClock();
+    } else {
+      if (recallStartedAt === null) {
+        startedAt += now - pausedAt;
+        if (advanceAt !== null) scheduleBoardAdvance(Math.max(0, advanceAt - pausedAt));
+        timer = window.setInterval(tickClock, 100);
+      }
+      pausedAt = null;
+      prepareAudio();
+    }
+    updateGameView();
+  }
+
+  function scheduleBoardAdvance(delay) {
+    advanceAt = performance.now() + delay;
+    advanceTimer = window.setTimeout(() => {
+      boardIndex++;
+      drawBoard(advanceSide);
+    }, delay);
+  }
+
+  function drawBoard(focusSide = "expression") {
+    const pairs = boards[boardIndex];
+    advanceAt = null;
+    boardMatches = 0;
+    matchDurations = new Map();
+    wrongCards = [];
+    boardNumber.textContent = "Board " + (boardIndex + 1) + " of " + boards.length;
+    segments.replaceChildren(...boards.map((_, index) => {
+      const segment = document.createElement("span");
+      if (index < boardIndex) segment.className = "done";
+      if (index === boardIndex) segment.className = "current";
+      return segment;
+    }));
+
+    for (const [side, column] of Object.entries(columns)) {
+      column.replaceChildren(...shuffle(pairs).map(pair => makeCard(pair, side)));
+    }
+
+    showFeedback("Choose any card.");
+    window.scrollTo(0, 0);
+    columns[focusSide].firstElementChild.focus({ preventScroll: true });
+  }
+
+  function makeCard(pair, side) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "card";
+    button.setAttribute("aria-pressed", "false");
+    if (side === "expression") {
+      button.textContent = pair.factors.join(" × ");
+      button.setAttribute("aria-label", pair.factors.join(" times "));
+    } else {
+      button.textContent = pair.result;
+    }
+    button.addEventListener("click", event => chooseCard({ button, pair, side }, event.detail === 0));
+    return button;
+  }
+
+  function markSelected(card, active) {
+    card.button.classList.toggle("selected", active);
+    card.button.setAttribute("aria-pressed", String(active));
+  }
+
+  function lockCard(card) {
+    card.button.classList.add("matched");
+    card.button.disabled = true;
+    card.button.setAttribute("aria-label",
+      (card.button.getAttribute("aria-label") || card.button.textContent) + ", matched");
+    const column = columns[card.side];
+    column.insertBefore(card.button, column.children[boardMatches]);
+  }
+
+  function chooseCard(card, viaKeyboard) {
+    if (pausedAt !== null || recallStartedAt !== null || advanceAt !== null || card.button.disabled) return;
+
+    for (const button of wrongCards) button.classList.remove("wrong");
+    wrongCards = [];
+
+    if (!selected || selected.side === card.side) {
+      const deselecting = selected?.button === card.button;
+      if (selected) markSelected(selected, false);
+      selected = deselecting ? null : card;
+      if (selected) {
+        markSelected(selected, true);
+        selectedAt = elapsedTime();
+      }
+
+      const hint = card.side === "expression" ? "Find its result." : "Find its expression.";
+      showFeedback(selected ? hint : "Choose any expression or result.");
+      return;
+    }
+
+    const first = selected;
+    markSelected(first, false);
+    selected = null;
+    attempted.add(first.pair);
+
+    if (first.pair.result !== card.pair.result) {
+      missed.add(first.pair);
+      wrongCards = [first.button, card.button];
+      for (const button of wrongCards) button.classList.add("wrong");
+      showFeedback("Try again.", "wrong");
+      if (viaKeyboard) first.button.focus({ preventScroll: true });
+      playCue("miss");
+      return;
+    }
+
+    lockCard(first);
+    lockCard(card);
+    matchDurations.set(first.pair, elapsedTime() - selectedAt);
+    matched++;
+    boardMatches++;
+    updateProgress();
+
+    if (boardMatches === boards[boardIndex].length) {
+      advanceSide = first.side;
+      if (recallCount > 0) {
+        beginRecall();
+        playCue("board");
+      } else if (matched === total) {
+        endGame();
+      } else {
+        showFeedback("Board complete!", "correct");
+        scheduleBoardAdvance(300);
+        playCue("board");
+      }
+    } else {
+      showFeedback("Matched!", "correct");
+      if (viaKeyboard) {
+        columns[first.side].querySelector("button:not(:disabled)").focus({ preventScroll: true });
+      }
+      playCue("match");
+    }
+  }
+
+  function beginRecall() {
+    recallStartedAt = performance.now();
+    window.clearInterval(timer);
+    tickClock();
+    recallPairs = shuffle(boards[boardIndex]).sort((a, b) =>
+      Number(missed.has(b)) - Number(missed.has(a)) || matchDurations.get(b) - matchDurations.get(a)
+    ).slice(0, recallCount);
+    recallIndex = 0;
+    updateGameView();
+    window.scrollTo(0, 0);
+    drawRecall();
+  }
+
+  function drawRecall() {
+    const pair = recallPairs[recallIndex];
+    const reverse = recallIndex % 2 === 1;
+    recallAnswered = false;
+    recallForm.reset();
+    document.querySelector("#recall-step").textContent =
+      "Recall " + (recallIndex + 1) + " of " + recallPairs.length + " · Untimed";
+    recallTitle.textContent = reverse ? pair.result + " = ? × ?" : pair.factors.join(" × ") + " = ?";
+    document.querySelector("#recall-instruction").textContent =
+      reverse ? "Enter the two factors in either order." : "Enter the exact product.";
+    recallFirst.disabled = false;
+    recallFirst.maxLength = reverse ? 2 : 3;
+    recallFirst.setAttribute("aria-label", reverse ? "First factor" : "Product");
+    recallSecond.disabled = !reverse;
+    recallSecond.hidden = !reverse;
+    document.querySelector("#recall-times").hidden = !reverse;
+    recallAnswer.textContent = "";
+    recallNext.textContent = "Check answer";
+    recallReveal.hidden = false;
+    recallTitle.focus({ preventScroll: true });
+  }
+
+  function answerRecall(reveal = false) {
+    if (pausedAt !== null || recallStartedAt === null || recallAnswered) return;
+    const pair = recallPairs[recallIndex];
+    const equation = pair.factors.join(" × ") + " = " + pair.result;
+    let message = "The match is " + equation + ".";
+    if (!reveal) {
+      const reverse = recallIndex % 2 === 1;
+      const first = Number(recallFirst.value);
+      const second = Number(recallSecond.value);
+      const correct = reverse ?
+        deck.get(pair.result).some(([a, b]) => a === Math.min(first, second) && b === Math.max(first, second)) :
+        first === pair.result;
+      const enteredEquation = reverse ? first + " × " + second + " = " + (first * second) : equation;
+      recallAttempts++;
+      if (correct) {
+        recallCorrect++;
+        message = "Correct. " + enteredEquation + ".";
+      } else if (reverse) {
+        message = "Your factors give " + enteredEquation + ".\n" + message;
+      }
+      playCue(correct ? "recall" + (recallIndex + 1) : "miss");
+    }
+
+    recallAnswered = true;
+    recallAnswer.textContent = message;
+    recallFirst.disabled = true;
+    recallSecond.disabled = true;
+    recallReveal.hidden = true;
+    recallNext.textContent =
+      recallIndex + 1 < recallPairs.length ? "Next prompt" : matched === total ? "See score" : "Next board";
+    recallNext.focus({ preventScroll: true });
+  }
+
+  function submitRecall(event) {
+    event.preventDefault();
+    if (pausedAt !== null || recallStartedAt === null) return;
+    if (!recallAnswered) {
+      answerRecall();
+    } else if (recallIndex + 1 < recallPairs.length) {
+      recallIndex++;
+      drawRecall();
+    } else if (matched === total) {
+      endGame();
+    } else {
+      startedAt += performance.now() - recallStartedAt;
+      recallStartedAt = null;
+      boardIndex++;
+      updateGameView();
+      drawBoard(advanceSide);
+      timer = window.setInterval(tickClock, 100);
+    }
+  }
+
+  function startGame(event) {
+    const settings = event.currentTarget.closest(".panel");
+    setSessionMatches(settings.querySelector(".board-count-option").value);
+    setBoardSize(settings.querySelector(".size-option").value);
+    setRecallCount(settings.querySelector(".recall-option").value);
+    boards = dealBoards(deck, boardSize).slice(0, sessionMatches / boardSize);
+    total = boards.length * boardSize;
+    board.dataset.size = String(boardSize);
+    boardIndex = 0;
+    matched = 0;
+    attempted = new Set();
+    missed = new Set();
+    selected = null;
+    pausedAt = null;
+    recallStartedAt = null;
+    recallAttempts = 0;
+    recallCorrect = 0;
+    intro.hidden = true;
+    finish.hidden = true;
+    play.hidden = false;
+    updateGameView();
+    updateProgress();
+    updateClock(0);
+    drawBoard();
+    prepareAudio();
+    startedAt = performance.now();
+    timer = window.setInterval(tickClock, 100);
+  }
+
+  function stopGameTimers() {
+    window.clearInterval(timer);
+    window.clearTimeout(advanceTimer);
+  }
+
+  function returnHome(event) {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    event.preventDefault();
+    stopGameTimers();
+    if (soundOutput) soundOutput.gain.value = 0;
+    play.hidden = true;
+    finish.hidden = true;
+    intro.hidden = false;
+    window.scrollTo(0, 0);
+    document.querySelector("#intro-title").focus({ preventScroll: true });
+  }
+
+  function endGame(completed = true) {
+    const elapsed = elapsedTime();
+    stopGameTimers();
+    play.hidden = true;
+    finish.hidden = false;
+    const finishTitle = document.querySelector("#finish-title");
+    const attempts = attempted.size;
+    document.querySelector("#finish-label").textContent = completed ? "Game complete" : "Game ended";
+    finishTitle.textContent = completed ? "All " + total + " matched." : "Your score so far.";
+    document.querySelector("#finish-summary").textContent =
+      attempts === 0 ? "No pairs attempted yet." : attempts + (attempts === 1 ? " pair attempted." : " pairs attempted.");
+    document.querySelector("#final-matches").textContent = matched + "/" + total;
+    document.querySelector("#final-time").textContent = formatTime(elapsed);
+    document.querySelector("#final-accuracy").textContent = attempts ? (attempts - missed.size) + "/" + attempts : "—";
+    document.querySelector("#finish-stats").dataset.recall = String(recallCount > 0);
+    document.querySelector("#recall-stat").hidden = recallCount === 0;
+    document.querySelector("#final-recall").textContent = recallAttempts ? recallCorrect + "/" + recallAttempts : "—";
+
+    const reviewList = document.querySelector("#review-list");
+    reviewList.replaceChildren(...Array.from(missed, pair => {
+      const item = document.createElement("li");
+      item.textContent = pair.factors.join(" × ") + " = " + pair.result;
+      return item;
+    }));
+    document.querySelector("#review").hidden = missed.size === 0;
+    window.scrollTo(0, 0);
+    finishTitle.focus({ preventScroll: true });
+    if (completed) playCue("finish");
+  }
+
+  updateSoundControl();
+  updateSizeControls();
+  for (const option of sizeOptions) {
+    option.addEventListener("change", () => setBoardSize(option.value));
+  }
+  for (const select of boardCountOptions) {
+    select.addEventListener("change", () => setSessionMatches(select.value));
+  }
+  for (const option of recallOptions) {
+    option.value = String(recallCount);
+    option.addEventListener("change", () => setRecallCount(option.value));
+  }
+  document.querySelector("#home").addEventListener("click", returnHome);
+  document.querySelector("#start").addEventListener("click", startGame);
+  soundButton.addEventListener("click", toggleSound);
+  pauseButton.addEventListener("click", togglePause);
+  document.querySelector("#end-game").addEventListener("click", () => endGame(false));
+  recallForm.addEventListener("submit", submitRecall);
+  recallReveal.addEventListener("click", () => answerRecall(true));
+  document.querySelector("#replay").addEventListener("click", startGame);
+</script>
+</body>
+</html>
