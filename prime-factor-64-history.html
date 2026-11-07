@@ -30,7 +30,7 @@
     <nav class="toc" aria-label="On this page">
       <details open>
         <summary>On this page</summary>
-        <ul><li><a href="#the-seven-primes">The seven primes</a></li><li><a href="#two-squares-that-needed-a-cue">Two squares that needed a cue</a></li><li><a href="#from-39-products-to-55-results">From 39 products to 55 results</a></li><li><a href="#playing-the-first-game">Playing the first game</a></li><li><a href="#board-sizes-and-the-move-to-60">Board sizes and the move to 60</a></li><li><a href="#the-final-deck-and-session-controls">The final deck and session controls</a></li><li><a href="#the-final-playtest-and-polish">Polishing the original release</a></li><li><a href="#practice-across-sessions">Practice across sessions</a></li><li><a href="#ui-history-from-the-first-release">UI history from the first release</a></li><li><a href="#ui-history-through-the-final-edit">UI history from 60 results to saved practice</a></li><li><a href="#how-the-name-was-chosen">How the name was chosen</a></li><li><a href="#other-paths-we-considered">Other paths we considered</a></li><li><a href="#the-64-results-in-the-final-deck">The 64 results in the final deck</a></li><li><a href="#technical-version-log">Technical version log</a></li></ul>
+        <ul><li><a href="#the-seven-primes">The seven primes</a></li><li><a href="#two-squares-that-needed-a-cue">Two squares that needed a cue</a></li><li><a href="#from-39-products-to-55-results">From 39 products to 55 results</a></li><li><a href="#playing-the-first-game">Playing the first game</a></li><li><a href="#board-sizes-and-the-move-to-60">Board sizes and the move to 60</a></li><li><a href="#the-final-deck-and-session-controls">The final deck and session controls</a></li><li><a href="#the-final-playtest-and-polish">Polishing the original release</a></li><li><a href="#practice-across-sessions">Practice across sessions</a></li><li><a href="#ui-history-from-the-first-release">UI history from the first release</a></li><li><a href="#ui-history-through-the-final-edit">UI history since the 60-result game</a></li><li><a href="#how-the-name-was-chosen">How the name was chosen</a></li><li><a href="#other-paths-we-considered">Other paths we considered</a></li><li><a href="#the-64-results-in-the-final-deck">The 64 results in the final deck</a></li><li><a href="#technical-version-log">Technical version log</a></li></ul>
       </details>
     </nav>
     <article class="doc-body">
@@ -189,8 +189,8 @@
 </table>
 </div>
 <p class="note">The original board already distinguished selected, wrong, and matched cards with lime, red, and pale green states. It also provided text hints, keyboard focus, and reduced-motion support.</p>
-<h2 id="ui-history-through-the-final-edit">UI history from 60 results to saved practice</h2>
-<div class="table-scroll" role="region" tabindex="0" aria-label="UI history from 60 results to saved practice">
+<h2 id="ui-history-through-the-final-edit">UI history since the 60-result game</h2>
+<div class="table-scroll" role="region" tabindex="0" aria-label="UI history since the 60-result game">
 <table>
   <thead>
     <tr><th scope="col"><strong>Release step</strong></th><th scope="col"><strong>What changed for the player</strong></th></tr>
@@ -207,6 +207,7 @@
     <tr><td>19  Victory fanfare</td><td>A six-note climb, sustained chord, and high flourish replaced the short finish cue. It played on completion, or on See score after the last recall check. The same finish path applied to short and full sessions.</td></tr>
     <tr><td>20  Two lines of feedback</td><td>A wrong factor answer put the entered equation on the first line and the target equation on the second. A correct answer or Show answer continued to display a single message.</td></tr>
     <tr><td>21  Practice progress</td><td>The home screen gained Practice weak facts, personal bests for the selected settings, and controls to export, import, or reset progress.</td></tr>
+    <tr><td>22  Browser tab icon</td><td>Four lime tiles on dark green identify Prime Factor 64 when both games are open.</td></tr>
   </tbody>
 </table>
 </div>
@@ -278,9 +279,10 @@
 <p class="note">The additional factor pairs are 9 × 12 for 108, 8 × 14 for 112, 9 × 14 for 126, and 9 × 16 for 144.</p>
 <p>The final four-pair layout uses two shared-ending pairs on 14 boards and a triple plus a singleton on two. In the eight- and sixteen-pair layouts, every ending used on a board has at least two cards.</p>
 <h3 id="project-record">Project record</h3>
-<p>This chronology follows the project conversation from the first multiplication table through practice across sessions. The original 20 saved versions cover Prime Match 55, Prime Match 60, and Prime Factor 64. Entry 21 records the practice-progress package. The counts and equations were checked against the deck rules.</p>
+<p>This chronology follows the project conversation from the first multiplication table to the browser tab icon. The original 20 saved versions cover Prime Match 55, Prime Match 60, and Prime Factor 64. Entries 21 and 22 record saved practice and the tab icon. The counts and equations were checked against the deck rules.</p>
 <h2 id="technical-version-log">Technical version log</h2>
-<p>Each number matches the UI history. Entries 01–20 cite the original saved commits. Entry 21 identifies the game file in this package, based on GitHub commit <code>fa804dd</code>.</p>
+<p>Each number matches the UI history. Entries 01–20 cite the original saved commits. Entries 21 and 22 count the packaged game files based on GitHub commits <code>fa804dd</code> and <code>9d31917</code> respectively.</p>
+<p class="note"><a href="prime-factor-64-git-diffs.zip" download>Download the Prime Factor 64 historical diffs</a> for the 20 saved versions leading up to the first project commit on GitHub. The repository’s Git history starts at <code>fa804dd</code> and tracks subsequent changes.</p>
 <p class="note">LOC counts physical lines, including blanks and comments, in the original <code>index.html</code> snapshots and the current <code>prime-factor-64.html</code>. CSS and JS count the lines inside the style and script tags. HTML counts the remaining lines, including those tags. Total is the sum of all three.</p>
 <div class="table-scroll" role="region" tabindex="0" aria-label="Technical version log table">
 <table class="wide-table">
@@ -309,10 +311,12 @@
     <tr><td class="numeric">19<br>45d71e4</td><td class="numeric">156</td><td class="numeric">307</td><td class="numeric">643</td><td class="numeric">1106</td><td>Victory fanfare</td><td>Centralized the completion trigger. Scheduled overlapping notes and waited for audio to resume when needed.</td></tr>
     <tr><td class="numeric">20<br>6b97255</td><td class="numeric">156</td><td class="numeric">307</td><td class="numeric">643</td><td class="numeric">1106</td><td>Two-line factor feedback</td><td>Inserted a newline and used CSS pre-line spacing to preserve it inside the status message.</td></tr>
     <tr><td class="numeric">21<br>Package</td><td class="numeric">172</td><td class="numeric">324</td><td class="numeric">929</td><td class="numeric">1425</td><td>Practice progress</td><td>Stored versioned first-attempt history by prompt type, reused the recall screen for the untimed drill, and merged JSON backups by fact and session settings.</td></tr>
+    <tr><td class="numeric">22<br>Update 5</td><td class="numeric">173</td><td class="numeric">324</td><td class="numeric">929</td><td class="numeric">1426</td><td>Browser tab icon</td><td>Links a 32 × 32 PNG based on the four-tile brand mark.</td></tr>
   </tbody>
 </table>
 </div>
 <p class="note">Entry 21 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">7d24edba93c0e140a282766455a8a4d71dd68fa914c525baab6146a70923d7a1</code></p>
+<p class="note">Update 5 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">075c43a739e01a9437d0e3444ac3496bc1002364b08f904f9d0be9136ec5f96d</code></p>
       <p class="back"><a href="index.html">Back to project home</a></p>
     </article>
   </div>

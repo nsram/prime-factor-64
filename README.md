@@ -7,12 +7,20 @@ Open `index.html` to choose Prime Factor 64, Fog Sweep 64, or the learning guide
 | `index.html` | Project home |
 | `prime-factor-64.html` | Timed matching, recall checks, and saved practice progress |
 | `fog-sweep-64.html` | Two checkerboards, hidden tiles, round reviews, and pause and resume |
+| `prime-factor-64-icon.png` and `fog-sweep-64-icon.png` | Browser tab icons for the two games |
 | `learning-guide.html` | Mental-math guide, worked examples, recall drill, and answer key |
 | `prime-factor-64-history.html` | Case study, UI and technical history through the practice-progress update |
 | `fog-sweep-64-history.html` | Fog Sweep 64 design history and technical log |
 | `styles.css` | Shared styling for the home page, learning guide, and original case study |
 
-The separate `fog-sweep-64-git-diffs.zip` archive contains replayable patches for the original four Fog Sweep 64 source versions.
+## Historical diff archives
+
+These archives cover the original development of both games leading up to the first commit in this GitHub repository, `fa804dd`. Each includes replay instructions for the original game source snapshots.
+
+- [prime-factor-64-git-diffs.zip](prime-factor-64-git-diffs.zip) contains 20 Prime Factor 64 patches.
+- [fog-sweep-64-git-diffs.zip](fog-sweep-64-git-diffs.zip) contains four Fog Sweep 64 patches.
+
+Follow the repository’s Git history from `fa804dd` onward for changes to the combined project.
 
 ## Practice progress
 
