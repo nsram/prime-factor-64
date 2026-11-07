@@ -398,7 +398,7 @@
         <p id="practice-summary"></p>
         <button class="control-button" id="start-practice" type="button" disabled>Practice weak facts</button>
         <p id="personal-best" hidden></p>
-        <details>
+        <details id="manage-progress">
           <summary>Manage progress</summary>
           <div class="progress-actions">
             <button class="control-button" id="export-progress" type="button">Export progress</button>
@@ -514,6 +514,7 @@
   </main>
 </div>
 
+<script src="practice-progress.js"></script>
 <script>
   "use strict";
 
@@ -672,185 +673,36 @@
   let pendingMatches = {};
   let matchingRunId;
 
-  const progressKey = "prime-factor-64:practice-progress";
-  const corruptProgressKey = progressKey + ":corrupt-backup";
+  const practiceStorage = window.PracticeProgress;
+  const practiceStore = practiceStorage?.createStore(deck, {
+    onChange: updatePracticeHome,
+    onRecovery: () => { document.querySelector("#progress-recovery").hidden = false; }
+  });
   const promptOptions = Array.from(deck, ([result, options]) => [
     { pair: { result, factors: options[0] }, reverse: true },
     ...options.map(factors => ({ pair: { result, factors }, reverse: false }))
   ]).flat();
-  const factIds = new Set(promptOptions.flatMap(({ pair, reverse }) => reverse
-    ? [recallId(pair, true)]
-    : [recallId(pair, false), matchId(pair)]));
-  const modeLimits = new Map(Object.keys(boardLayouts).flatMap(size => sessionLengths.flatMap(length =>
-    [0, 2, 4].map(recall => [`${size}:${length}:${recall}`, length])
-  )));
-  let practiceProgress = emptyProgress();
-  let progressStorageAvailable = true;
-
-  function factorId(pair) {
-    const [a, b] = pair.factors;
-    return Math.min(a, b) + "×" + Math.max(a, b);
-  }
-
-  function matchId(pair) {
-    return "match:" + factorId(pair);
-  }
-
-  function recallId(pair, reverse) {
-    return reverse ? "factors:" + pair.result : "product:" + factorId(pair);
-  }
-
-  function emptyProgress() {
-    return { version: 1, facts: {}, best: {}, runIds: [] };
-  }
-
-  function parsePracticeProgress(text) {
-    const data = JSON.parse(text);
-    const object = value => value && typeof value === "object" && !Array.isArray(value);
-    const time = value => Number.isSafeInteger(value) && value >= 0 && value <= 8.64e15;
-    if (data?.version !== 1 || !object(data.facts) || !object(data.best)) throw new Error("Unknown progress format");
-    const runIds = data.runIds === undefined ? [] : data.runIds;
-    if (!Array.isArray(runIds) || !runIds.every(id => typeof id === "string" && /^[0-9a-f]{32}$/.test(id))) {
-      throw new Error("Invalid completed run IDs");
-    }
-    for (const [id, fact] of Object.entries(data.facts)) {
-      if (!factIds.has(id) || !object(fact) || !time(fact.seen) || !time(fact.missed) || fact.missed > fact.seen ||
-          !Array.isArray(fact.correct) || fact.correct.length > 2 ||
-          !fact.correct.every(at => time(at) && at > fact.missed && at <= fact.seen)) {
-        throw new Error("Invalid fact history");
-      }
-    }
-    for (const [mode, best] of Object.entries(data.best)) {
-      const limit = modeLimits.get(mode);
-      if (!limit || !object(best) || !Number.isInteger(best.firstTry) || best.firstTry < 0 ||
-          best.firstTry > limit || (best.perfectMs !== null && (!time(best.perfectMs) || best.firstTry !== limit))) {
-        throw new Error("Invalid personal best");
-      }
-    }
-    return { version: 1, facts: data.facts, best: data.best, runIds: [...new Set(runIds)] };
-  }
-
-  function readSavedProgress() {
-    const saved = localStorage.getItem(progressKey);
-    if (saved === null) return emptyProgress();
-    try {
-      return parsePracticeProgress(saved);
-    } catch {
-      // Save the original text before removing the damaged record.
-      localStorage.setItem(corruptProgressKey, saved);
-      localStorage.removeItem(progressKey);
-      document.querySelector("#progress-recovery").hidden = false;
-      return emptyProgress();
-    }
-  }
-
-  async function withProgressLock(action) {
-    let started = false;
-    try {
-      if (navigator.locks) {
-        return await navigator.locks.request(progressKey, () => {
-          started = true;
-          return action();
-        });
-      }
-    } catch (error) {
-      if (started) throw error;
-      // A local file or restricted browser can deny access to Web Locks.
-    }
-    return action();
-  }
-
-  function refreshPracticeProgress() {
-    return withProgressLock(() => {
-      try {
-        const saved = readSavedProgress();
-        if (!progressStorageAvailable) mergePracticeProgress(saved, practiceProgress);
-        practiceProgress = saved;
-      } catch {
-        progressStorageAvailable = false;
-      }
-      updatePracticeHome();
-    });
-  }
-
-  function distinctDays(times, after) {
-    const days = new Map();
-    for (const at of times.sort((a, b) => a - b)) {
-      if (at > after) days.set(new Date(at).toDateString(), at);
-    }
-    return Array.from(days.values()).slice(-2);
-  }
-
-  function mergeBest(base, mode, best) {
-    const previous = base.best[mode];
-    const perfectMs = Math.min(previous?.perfectMs ?? Infinity, best.perfectMs ?? Infinity);
-    base.best[mode] = {
-      firstTry: Math.max(previous?.firstTry ?? 0, best.firstTry),
-      perfectMs: Number.isFinite(perfectMs) ? perfectMs : null
-    };
-  }
-
-  function mergePracticeProgress(base, changes, completedRun = null) {
-    for (const [id, fact] of Object.entries(changes.facts)) {
-      const previous = base.facts[id];
-      const missed = Math.max(previous?.missed ?? 0, fact.missed);
-      base.facts[id] = {
-        seen: Math.max(previous?.seen ?? 0, fact.seen),
-        missed,
-        correct: distinctDays([...(previous?.correct ?? []), ...fact.correct], missed)
-      };
-    }
-    for (const [mode, best] of Object.entries(changes.best)) {
-      mergeBest(base, mode, best);
-    }
-    if (changes.runIds.length) base.runIds = [...new Set([...base.runIds, ...changes.runIds])];
-    if (completedRun && !base.runIds.includes(completedRun.id)) {
-      base.runIds.push(completedRun.id);
-      mergeBest(base, completedRun.mode, completedRun.best);
-    }
-  }
-
-  function savePracticeProgress(changes, completedRun = null) {
-    return withProgressLock(() => {
-      try {
-        const saved = readSavedProgress();
-        if (!progressStorageAvailable) mergePracticeProgress(saved, practiceProgress);
-        mergePracticeProgress(saved, changes, completedRun);
-        localStorage.setItem(progressKey, JSON.stringify(saved));
-        practiceProgress = saved;
-        progressStorageAvailable = true;
-      } catch {
-        mergePracticeProgress(practiceProgress, changes, completedRun);
-        progressStorageAvailable = false;
-      }
-      updatePracticeHome();
-      return progressStorageAvailable;
-    });
-  }
-
-  function observation(correct) {
-    const now = Date.now();
-    return { seen: now, missed: correct ? 0 : now, correct: correct ? [now] : [] };
-  }
 
   function modeKey() {
     return boardSize + ":" + sessionMatches + ":" + recallCount;
   }
 
   function saveMatchingProgress(best = null) {
-    if (!Object.keys(pendingMatches).length && !best) return;
-    const changes = emptyProgress();
+    if (!practiceStore || (!Object.keys(pendingMatches).length && !best)) return;
+    const changes = practiceStorage.empty();
     changes.facts = pendingMatches;
     const completedRun = best ? { id: matchingRunId, mode: modeKey(), best } : null;
     pendingMatches = {};
-    return savePracticeProgress(changes, completedRun);
+    return practiceStore.save(changes, completedRun);
   }
 
   function practiceCandidates() {
+    if (!practiceStore) return [];
+    const { facts } = practiceStore.state;
     return promptOptions.map(prompt => {
       const { pair, reverse } = prompt;
-      const recallHistory = practiceProgress.facts[recallId(pair, reverse)];
-      const matchHistory = reverse ? null : practiceProgress.facts[matchId(pair)];
+      const recallHistory = facts[practiceStorage.recallId(pair, reverse)];
+      const matchHistory = reverse ? null : facts[practiceStorage.matchId(pair)];
       const missed = Math.max(recallHistory?.missed ?? 0, matchHistory?.missed ?? 0);
       const correct = (recallHistory?.correct ?? []).filter(at => at > missed);
       const retired = missed > 0 && correct.length >= 2;
@@ -865,7 +717,7 @@
   }
 
   function updatePersonalBest() {
-    const best = practiceProgress.best[modeKey()];
+    const best = practiceStore?.state.best[modeKey()];
     personalBest.hidden = !best;
     if (best) {
       personalBest.textContent = "Best for these settings: " + best.firstTry + "/" + sessionMatches + " first try." +
@@ -874,11 +726,16 @@
   }
 
   function updatePracticeHome() {
+    if (!practiceStore) {
+      practiceSummary.textContent = "Open the game from the project folder to use saved practice progress.";
+      document.querySelector("#manage-progress").hidden = true;
+      return;
+    }
     const count = practiceCandidates().filter(prompt => prompt.weak).length;
     practiceSummary.textContent = count
       ? count + (count === 1 ? " prompt to revisit." : " prompts to revisit.")
       : "Missed facts will appear here for untimed practice.";
-    if (!progressStorageAvailable) practiceSummary.textContent += " Progress is in this tab. Export a copy to keep it.";
+    if (!practiceStore.storageAvailable) practiceSummary.textContent += " Progress is in this tab. Export a copy to keep it.";
     startPracticeButton.disabled = count === 0;
     updatePersonalBest();
   }
@@ -889,8 +746,8 @@
   }
 
   async function exportPracticeProgress() {
-    await refreshPracticeProgress();
-    const file = new Blob([JSON.stringify(practiceProgress, null, 2) + "\n"], { type: "application/json" });
+    await practiceStore.refresh();
+    const file = new Blob([JSON.stringify(practiceStore.state, null, 2) + "\n"], { type: "application/json" });
     const url = URL.createObjectURL(file);
     const link = document.createElement("a");
     link.href = url;
@@ -905,8 +762,8 @@
     if (!file) return;
     try {
       if (file.size > 5_000_000) throw new Error("Progress file is too large");
-      const incoming = parsePracticeProgress(await file.text());
-      const saved = await savePracticeProgress(incoming);
+      const incoming = practiceStore.parse(await file.text());
+      const saved = await practiceStore.save(incoming);
       showPracticeStatus(saved
         ? "Progress merged."
         : "Progress merged in this tab. Export a copy to keep it.");
@@ -915,22 +772,13 @@
     }
   }
 
-  function resetPracticeProgress() {
+  async function resetPracticeProgress() {
     resetDialog.close();
-    return withProgressLock(() => {
-      try {
-        localStorage.removeItem(progressKey);
-        progressStorageAvailable = true;
-      } catch {
-        if (progressStorageAvailable) {
-          showPracticeStatus("Browser storage could not be reset.");
-          return;
-        }
-      }
-      practiceProgress = emptyProgress();
-      updatePracticeHome();
-      showPracticeStatus(progressStorageAvailable ? "Progress reset." : "Progress reset in this tab.");
-    });
+    if (!await practiceStore.reset()) {
+      showPracticeStatus("Browser storage could not be reset.");
+      return;
+    }
+    showPracticeStatus(practiceStore.storageAvailable ? "Progress reset." : "Progress reset in this tab.");
   }
 
   const soundPreferenceKey = "prime-match-55:sound";
@@ -1215,7 +1063,9 @@
     markSelected(first, false);
     selected = null;
     const correct = first.pair.result === card.pair.result;
-    if (!attempted.has(first.pair)) pendingMatches[matchId(first.pair)] = observation(correct);
+    if (practiceStore && !attempted.has(first.pair)) {
+      pendingMatches[practiceStorage.matchId(first.pair)] = practiceStorage.observation(correct);
+    }
     attempted.add(first.pair);
 
     if (!correct) {
@@ -1315,9 +1165,11 @@
       playCue(correct ? "recall" + (recallIndex % 4 + 1) : "miss");
     }
 
-    const changes = emptyProgress();
-    changes.facts[recallId(pair, reverse)] = observation(correct);
-    savePracticeProgress(changes);
+    if (practiceStore) {
+      const changes = practiceStorage.empty();
+      changes.facts[practiceStorage.recallId(pair, reverse)] = practiceStorage.observation(correct);
+      practiceStore.save(changes);
+    }
     recallAnswered = true;
     recallAnswer.textContent = message;
     recallFirst.disabled = true;
@@ -1483,7 +1335,8 @@
 
   updateSoundControl();
   updateSizeControls();
-  refreshPracticeProgress();
+  if (practiceStore) practiceStore.refresh();
+  else updatePracticeHome();
   for (const option of sizeOptions) {
     option.addEventListener("change", () => setBoardSize(option.value));
   }
@@ -1504,10 +1357,6 @@
   document.querySelector("#export-before-reset").addEventListener("click", exportPracticeProgress);
   document.querySelector("#confirm-reset").addEventListener("click", resetPracticeProgress);
   progressFile.addEventListener("change", importPracticeProgress);
-  window.addEventListener("storage", event => {
-    if (event.key !== progressKey && event.key !== null) return;
-    refreshPracticeProgress();
-  });
   soundButton.addEventListener("click", toggleSound);
   pauseButton.addEventListener("click", togglePause);
   endButton.addEventListener("click", () => practicing ? finishPractice() : endGame(false));

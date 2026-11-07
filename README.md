@@ -7,9 +7,10 @@ Open `index.html` to choose Prime Factor 64, Fog Sweep 64, or the learning guide
 | `index.html` | Project home |
 | `prime-factor-64.html` | Timed matching, recall checks, and saved practice progress |
 | `fog-sweep-64.html` | Two checkerboards, hidden tiles, round reviews, and pause and resume |
+| `practice-progress.js` | Shared practice storage and backup handling for both games |
 | `prime-factor-64-icon.png` and `fog-sweep-64-icon.png` | Browser tab icons for the two games |
 | `learning-guide.html` | Mental-math guide, worked examples, recall drill, and answer key |
-| `prime-factor-64-history.html` | Case study, UI and technical history through the practice-progress update |
+| `prime-factor-64-history.html` | Case study, UI and technical history through the shared practice update |
 | `fog-sweep-64-history.html` | Fog Sweep 64 design history and technical log |
 | `styles.css` | Shared styling for the home page, learning guide, and original case study |
 
@@ -26,7 +27,9 @@ Follow the repository’s Git history from `fa804dd` onward for changes to the c
 
 Prime Factor 64 remembers first-attempt results and shows **Practice weak facts** after a miss or a revealed answer. The untimed drill offers up to eight prompts, with at most five misses and remaining slots drawn from older, unretired facts when available. Two unaided correct answers on different days retire a missed prompt. Each completed matching run has an ID so it contributes to personal bests once.
 
-Progress is saved in the browser and refreshed across tabs. Browsers with Web Locks serialize saves from multiple tabs. Use **Manage progress** to export the latest saved history or merge a backup from another device or offline copy. The reset dialog offers **Export progress** before confirmation. If the saved history becomes unreadable, the app keeps a copy in browser storage and starts a fresh history.
+Each completed Fog Sweep 64 round sends its first-try matching results to Prime Factor 64. **Retry** adds a miss to the weak-facts drill. A first-try match counts as seen even when it earns **Slow**. Retirement still requires two unaided correct recall answers on different days in Prime Factor. Prime Factor personal bests come from Prime Factor sessions.
+
+Open both games on the same site in the same browser profile to share progress. For offline play, keep `practice-progress.js` beside both game files. Progress is saved in the browser and refreshed across tabs. Browsers with Web Locks serialize saves from multiple tabs. Use **Manage progress** to export the latest saved history or merge a backup from another device or offline copy. The reset dialog offers **Export progress** before confirmation. If the saved history becomes unreadable, the app keeps a copy in browser storage and starts a fresh history.
 
 ## Pausing Fog Sweep 64
 

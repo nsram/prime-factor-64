@@ -83,9 +83,12 @@
   <h2>Browser tab icon</h2>
   <p>Sriram asked for each game to have its own tab icon. Fog Sweep 64 uses two revealed mint tiles and two covered tiles on a dark teal board.</p>
 
+  <h2>Shared practice history</h2>
+  <p>In Update 8, Grok Bot suggested bringing Fog Sweep misses into Prime Factor 64’s Practice weak facts. Completing a round saves all 16 first-try results together. Retry contributes a miss, and a first-try success counts as seen, including Slow matches. Leaving a round early skips that round’s observations. The games share the same recovery and cross-tab save safeguards. Prime Factor 64 still handles recall retirement and records its own personal bests.</p>
+
   <h2>Technical version log</h2>
   <p class="note"><a href="fog-sweep-64-git-diffs.zip" download>Download the Fog Sweep 64 historical diffs</a> for the four saved versions leading up to the first project commit on GitHub. The repository’s Git history starts at <code>fa804dd</code> and tracks subsequent changes.</p>
-  <p class="note">Entries 1–4 count the saved <code>dist/index.html</code> at each original commit. Entries 5–8 count the packaged <code>fog-sweep-64.html</code> in Updates 2–5, with changes measured against GitHub commits <code>96ec5a8</code>, <code>bde565d</code>, <code>8e8ca00</code>, and <code>9d31917</code> respectively. Blank lines count. CSS and JavaScript count lines inside their tags. HTML counts the remaining lines, including the tags.</p>
+  <p class="note">Entries 1–4 count the saved <code>dist/index.html</code> at each original commit. Entries 5–9 count the packaged <code>fog-sweep-64.html</code> in Updates 2–5 and 8, with changes measured against GitHub commits <code>96ec5a8</code>, <code>bde565d</code>, <code>8e8ca00</code>, <code>9d31917</code>, and <code>20f0813</code> respectively. Blank lines count. CSS and JavaScript count lines inside their tags. HTML counts the remaining lines, including the tags. Update 8 also includes 197 lines in <code>practice-progress.js</code>, shared by both games.</p>
   <div class="table-scroll" role="region" aria-label="Technical version log" tabindex="0">
     <table>
       <thead><tr><th scope="col">Version</th><th scope="col">JS LOC</th><th scope="col">CSS LOC</th><th scope="col">HTML LOC</th><th scope="col">Total LOC</th><th scope="col">Diff</th><th scope="col">Feature change</th><th scope="col">Implementation</th></tr></thead>
@@ -138,6 +141,12 @@
             <td class="numeric">750</td><td class="numeric">+1 / −0</td>
             <td>Browser tab icon.</td><td>Links a 32 × 32 PNG that depicts revealed and covered tiles.</td>
           </tr>
+          <tr>
+            <th scope="row">9<br>Update 8</th>
+            <td class="numeric">438</td><td class="numeric">251</td><td class="numeric">78</td>
+            <td class="numeric">767</td><td class="numeric">+18 / −1</td>
+            <td>Completed rounds feed Prime Factor 64’s weak-facts drill.</td><td>Writes one batch of first-try observations per round through the shared practice storage script.</td>
+          </tr>
       </tbody>
     </table>
   </div>
@@ -145,6 +154,7 @@
   <p class="note">Update 3 SHA-256 for <code>fog-sweep-64.html</code><br><code style="overflow-wrap: anywhere">e06ed0bca971536509223da60be0a635725071e1c3a4faecea847a4d696b2e21</code></p>
   <p class="note">Update 4 SHA-256 for <code>fog-sweep-64.html</code><br><code style="overflow-wrap: anywhere">21a0ff3e1a71e05cc6a669d2fd8de26a0bf20e058888b9ac3777a40e2e0a4b90</code></p>
 <p class="note">Update 5 SHA-256 for <code>fog-sweep-64.html</code><br><code style="overflow-wrap: anywhere">42120cc984195b01dab325ce0669924e0c15c5b7b4d0a3f7b0f36d828f0c32c2</code></p>
+  <p class="note">Update 8 SHA-256 for <code>fog-sweep-64.html</code><br><code style="overflow-wrap: anywhere">8b7795c5c714946acae2413831c9c108e0e74a470dafe17816f60cab0b462c66</code></p>
 </main>
 </body>
 </html>

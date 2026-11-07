@@ -305,6 +305,7 @@
         <button class="next" id="next" type="button">Next round</button>
       </div>
       <p class="review-note" id="round-time"></p>
+      <p class="review-note" id="progress-recovery" role="status" hidden>Saved practice progress was unreadable. A backup was kept and practice progress started fresh.</p>
       <div class="game-summary" id="game-summary" hidden>
         <table class="score-table" aria-label="Score and time by round">
           <thead>
@@ -321,6 +322,7 @@
     </section>
   </main>
 </div>
+<script src="practice-progress.js"></script>
 <script>
   "use strict";
 
@@ -390,6 +392,10 @@
   }
 
   const deck = buildDeck();
+  const practiceStorage = window.PracticeProgress;
+  const practiceStore = practiceStorage?.createStore(deck, {
+    onRecovery: () => { document.querySelector("#progress-recovery").hidden = false; }
+  });
   const boards = [document.querySelector("#expressions"), document.querySelector("#results")];
   const playBoards = document.querySelector("#boards");
   const pause = document.querySelector("#pause");
@@ -645,6 +651,16 @@
     reviewTitle.focus();
   }
 
+  function saveRoundPractice() {
+    if (!practiceStore) return;
+    const changes = practiceStorage.empty();
+    for (const pair of rounds[roundIndex]) {
+      const { retried, seen } = roundPerformance.get(pair.result);
+      changes.facts[practiceStorage.matchId(pair)] = practiceStorage.observation(!retried, seen);
+    }
+    return practiceStore.save(changes);
+  }
+
   function pick(tile, keyboard) {
     if (pausedAt !== null || tile.button.disabled || roundCleared === roundSize) return;
     // Round and tile timing share the same clock with pauses removed.
@@ -669,7 +685,7 @@
       return;
     }
 
-    const record = roundPerformance.get(first.fact.result) ?? { retried: false, elapsed: 0 };
+    const record = roundPerformance.get(first.fact.result) ?? { retried: false, elapsed: 0, seen: Date.now() };
     roundPerformance.set(first.fact.result, record);
     if (first.fact.result !== tile.fact.result) {
       record.retried = true;
@@ -698,6 +714,7 @@
       });
       status(equation + (finished ? " All 64 pairs cleared!" : " Round cleared!"), "good");
       next.textContent = finished ? "Play again" : "Next round";
+      saveRoundPractice();
       showReview(finished);
       playSound(finished ? "finish" : "round");
       return;
