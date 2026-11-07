@@ -166,6 +166,7 @@
 <p><strong>Practice weak facts</strong> offers up to eight untimed prompts. A missed match can return as a product question, while a missed recall question returns in its original direction. Two unaided correct answers on different days retire a prompt from the weak list. For example, the app tracks 6 × 18 and 9 × 12 separately when asking for the product. When it asks for factors of 108, either pair counts.</p>
 <p>Practice history is saved in the browser. <strong>Manage progress</strong> can export, merge, or reset it. Completed matching runs record first-try bests and fastest perfect matching times for each combination of board size, session length, and recall setting.</p>
 <p>Chromium checks covered reopening after a miss, retiring a prompt across two dates, exporting and restoring a backup, and completing games with recall off, two, or four. The checks also exercised scoring, pause and resume, and the completion cue.</p>
+<p>In Update 7, Sriram brought five fixes from Grok Bot’s review. The drill reserves room for older facts by capping misses at five. The app backs up unreadable progress and shows a recovery notice. Exports read the latest saved data, tabs refresh on storage changes, and an in-page reset dialog offers an export before confirmation. Completed matching runs have stable IDs for deduplication. A stress test exposed an overlapping-save race between tabs, so the app serializes progress operations where Web Locks are available.</p>
 <p class="note"><a href="prime-factor-64.html">Play Prime Factor 64</a>   ·   <a href="prime-factor-64.html" download="prime-factor-64.html">Open the standalone HTML</a></p>
 <h2 id="ui-history-from-the-first-release">UI history from the first release</h2>
 <p>The log follows the original saved versions and the practice-progress update. It records changes to the screen, sounds, and controls.</p>
@@ -208,6 +209,7 @@
     <tr><td>20  Two lines of feedback</td><td>A wrong factor answer put the entered equation on the first line and the target equation on the second. A correct answer or Show answer continued to display a single message.</td></tr>
     <tr><td>21  Practice progress</td><td>The home screen gained Practice weak facts, personal bests for the selected settings, and controls to export, import, or reset progress.</td></tr>
     <tr><td>22  Browser tab icon</td><td>Four lime tiles on dark green identify Prime Factor 64 when both games are open.</td></tr>
+    <tr><td>23  Practice progress fixes</td><td>Older facts have room in the drill. Progress reflects other tabs, and Reset opens a dialog with Cancel and Export progress.</td></tr>
   </tbody>
 </table>
 </div>
@@ -279,9 +281,9 @@
 <p class="note">The additional factor pairs are 9 × 12 for 108, 8 × 14 for 112, 9 × 14 for 126, and 9 × 16 for 144.</p>
 <p>The final four-pair layout uses two shared-ending pairs on 14 boards and a triple plus a singleton on two. In the eight- and sixteen-pair layouts, every ending used on a board has at least two cards.</p>
 <h3 id="project-record">Project record</h3>
-<p>This chronology follows the project conversation from the first multiplication table to the browser tab icon. The original 20 saved versions cover Prime Match 55, Prime Match 60, and Prime Factor 64. Entries 21 and 22 record saved practice and the tab icon. The counts and equations were checked against the deck rules.</p>
+<p>This chronology follows the project conversation from the first multiplication table through the practice-progress fixes. The original 20 saved versions cover Prime Match 55, Prime Match 60, and Prime Factor 64. Entries 21–23 record saved practice, the tab icon, and the practice-progress fixes. The counts and equations were checked against the deck rules.</p>
 <h2 id="technical-version-log">Technical version log</h2>
-<p>Each number matches the UI history. Entries 01–20 cite the original saved commits. Entries 21 and 22 count the packaged game files based on GitHub commits <code>fa804dd</code> and <code>9d31917</code> respectively.</p>
+<p>Each number matches the UI history. Entries 01–20 cite the original saved commits. Entries 21–23 count the packaged game files based on GitHub commits <code>fa804dd</code>, <code>9d31917</code>, and <code>e4f0f14</code> respectively.</p>
 <p class="note"><a href="prime-factor-64-git-diffs.zip" download>Download the Prime Factor 64 historical diffs</a> for the 20 saved versions leading up to the first project commit on GitHub. The repository’s Git history starts at <code>fa804dd</code> and tracks subsequent changes.</p>
 <p class="note">LOC counts physical lines, including blanks and comments, in the original <code>index.html</code> snapshots and the current <code>prime-factor-64.html</code>. CSS and JS count the lines inside the style and script tags. HTML counts the remaining lines, including those tags. Total is the sum of all three.</p>
 <div class="table-scroll" role="region" tabindex="0" aria-label="Technical version log table">
@@ -312,11 +314,13 @@
     <tr><td class="numeric">20<br>6b97255</td><td class="numeric">156</td><td class="numeric">307</td><td class="numeric">643</td><td class="numeric">1106</td><td>Two-line factor feedback</td><td>Inserted a newline and used CSS pre-line spacing to preserve it inside the status message.</td></tr>
     <tr><td class="numeric">21<br>Package</td><td class="numeric">172</td><td class="numeric">324</td><td class="numeric">929</td><td class="numeric">1425</td><td>Practice progress</td><td>Stored versioned first-attempt history by prompt type, reused the recall screen for the untimed drill, and merged JSON backups by fact and session settings.</td></tr>
     <tr><td class="numeric">22<br>Update 5</td><td class="numeric">173</td><td class="numeric">324</td><td class="numeric">929</td><td class="numeric">1426</td><td>Browser tab icon</td><td>Links a 32 × 32 PNG based on the four-tile brand mark.</td></tr>
+    <tr><td class="numeric">23<br>Update 7</td><td class="numeric">184</td><td class="numeric">336</td><td class="numeric">999</td><td class="numeric">1519</td><td>Practice progress fixes</td><td>Caps misses in the drill, recovers damaged storage, syncs and serializes progress operations across tabs where available, adds an export option to reset confirmation, and deduplicates completed runs.</td></tr>
   </tbody>
 </table>
 </div>
 <p class="note">Entry 21 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">7d24edba93c0e140a282766455a8a4d71dd68fa914c525baab6146a70923d7a1</code></p>
 <p class="note">Update 5 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">075c43a739e01a9437d0e3444ac3496bc1002364b08f904f9d0be9136ec5f96d</code></p>
+<p class="note">Update 7 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">c8dfb49ee0910f76c02773c50982b2d780cf59731198a49fbbd403f57395ecb2</code></p>
       <p class="back"><a href="index.html">Back to project home</a></p>
     </article>
   </div>

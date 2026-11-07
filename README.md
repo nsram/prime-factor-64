@@ -24,9 +24,9 @@ Follow the repository’s Git history from `fa804dd` onward for changes to the c
 
 ## Practice progress
 
-Prime Factor 64 remembers first-attempt results and shows **Practice weak facts** after a miss or a revealed answer. The untimed drill offers up to eight prompts. Two unaided correct answers on different days retire a missed prompt. Completed matching games earn personal bests for their selected settings.
+Prime Factor 64 remembers first-attempt results and shows **Practice weak facts** after a miss or a revealed answer. The untimed drill offers up to eight prompts, with at most five misses and remaining slots drawn from older, unretired facts when available. Two unaided correct answers on different days retire a missed prompt. Each completed matching run has an ID so it contributes to personal bests once.
 
-Progress is saved in the browser. Use **Manage progress** to export a JSON backup, merge one from another device or offline copy, or reset practice history and bests.
+Progress is saved in the browser and refreshed across tabs. Browsers with Web Locks serialize saves from multiple tabs. Use **Manage progress** to export the latest saved history or merge a backup from another device or offline copy. The reset dialog offers **Export progress** before confirmation. If the saved history becomes unreadable, the app keeps a copy in browser storage and starts a fresh history.
 
 ## Pausing Fog Sweep 64
 

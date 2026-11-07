@@ -313,6 +313,18 @@
   .practice-progress .control-button { white-space: normal; }
   .practice-progress summary { width: fit-content; padding: 12px 0; cursor: pointer; font-size: .85rem; }
   .progress-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .progress-dialog {
+    width: min(28rem, calc(100% - 2rem));
+    padding: 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--white);
+    color: var(--ink);
+  }
+  .progress-dialog::backdrop { background: #182c2570; }
+  .progress-dialog h2 { margin: 0; font-size: 1.25rem; }
+  .progress-dialog p { margin: .6rem 0 1rem; color: var(--muted); }
+  .progress-dialog .control-button { white-space: normal; }
 
   @media (max-width: 480px) {
     .game-controls { flex-wrap: wrap; gap: 4px; }
@@ -395,9 +407,20 @@
             <input id="progress-file" type="file" accept=".json,application/json" hidden>
           </div>
         </details>
+        <p id="progress-recovery" role="status" hidden>Saved progress was unreadable. A backup was kept and practice progress started fresh.</p>
         <p id="practice-status" role="status" hidden></p>
       </section>
     </section>
+
+    <dialog class="progress-dialog" id="reset-dialog" aria-labelledby="reset-title" aria-describedby="reset-description">
+      <h2 id="reset-title">Reset practice progress?</h2>
+      <p id="reset-description">This clears your practice history and personal bests. You can export a backup first.</p>
+      <div class="progress-actions">
+        <button class="control-button" id="cancel-reset" type="button" autofocus>Cancel</button>
+        <button class="control-button" id="export-before-reset" type="button">Export progress</button>
+        <button class="control-button" id="confirm-reset" type="button">Reset progress</button>
+      </div>
+    </dialog>
 
     <section class="play" id="play" aria-label="Matching game" hidden>
       <div class="hud">
@@ -610,6 +633,7 @@
   const practiceStatus = document.querySelector("#practice-status");
   const personalBest = document.querySelector("#personal-best");
   const progressFile = document.querySelector("#progress-file");
+  const resetDialog = document.querySelector("#reset-dialog");
   const columns = {
     expression: document.querySelector("#expressions"),
     result: document.querySelector("#results")
@@ -646,8 +670,10 @@
   let recallCorrect;
   let practicing = false;
   let pendingMatches = {};
+  let matchingRunId;
 
   const progressKey = "prime-factor-64:practice-progress";
+  const corruptProgressKey = progressKey + ":corrupt-backup";
   const promptOptions = Array.from(deck, ([result, options]) => [
     { pair: { result, factors: options[0] }, reverse: true },
     ...options.map(factors => ({ pair: { result, factors }, reverse: false }))
@@ -660,11 +686,6 @@
   )));
   let practiceProgress = emptyProgress();
   let progressStorageAvailable = true;
-  try {
-    practiceProgress = readSavedProgress();
-  } catch {
-    progressStorageAvailable = false;
-  }
 
   function factorId(pair) {
     const [a, b] = pair.factors;
@@ -680,7 +701,7 @@
   }
 
   function emptyProgress() {
-    return { version: 1, facts: {}, best: {} };
+    return { version: 1, facts: {}, best: {}, runIds: [] };
   }
 
   function parsePracticeProgress(text) {
@@ -688,6 +709,10 @@
     const object = value => value && typeof value === "object" && !Array.isArray(value);
     const time = value => Number.isSafeInteger(value) && value >= 0 && value <= 8.64e15;
     if (data?.version !== 1 || !object(data.facts) || !object(data.best)) throw new Error("Unknown progress format");
+    const runIds = data.runIds === undefined ? [] : data.runIds;
+    if (!Array.isArray(runIds) || !runIds.every(id => typeof id === "string" && /^[0-9a-f]{32}$/.test(id))) {
+      throw new Error("Invalid completed run IDs");
+    }
     for (const [id, fact] of Object.entries(data.facts)) {
       if (!factIds.has(id) || !object(fact) || !time(fact.seen) || !time(fact.missed) || fact.missed > fact.seen ||
           !Array.isArray(fact.correct) || fact.correct.length > 2 ||
@@ -702,12 +727,50 @@
         throw new Error("Invalid personal best");
       }
     }
-    return data;
+    return { version: 1, facts: data.facts, best: data.best, runIds: [...new Set(runIds)] };
   }
 
   function readSavedProgress() {
     const saved = localStorage.getItem(progressKey);
-    return saved === null ? emptyProgress() : parsePracticeProgress(saved);
+    if (saved === null) return emptyProgress();
+    try {
+      return parsePracticeProgress(saved);
+    } catch {
+      // Save the original text before removing the damaged record.
+      localStorage.setItem(corruptProgressKey, saved);
+      localStorage.removeItem(progressKey);
+      document.querySelector("#progress-recovery").hidden = false;
+      return emptyProgress();
+    }
+  }
+
+  async function withProgressLock(action) {
+    let started = false;
+    try {
+      if (navigator.locks) {
+        return await navigator.locks.request(progressKey, () => {
+          started = true;
+          return action();
+        });
+      }
+    } catch (error) {
+      if (started) throw error;
+      // A local file or restricted browser can deny access to Web Locks.
+    }
+    return action();
+  }
+
+  function refreshPracticeProgress() {
+    return withProgressLock(() => {
+      try {
+        const saved = readSavedProgress();
+        if (!progressStorageAvailable) mergePracticeProgress(saved, practiceProgress);
+        practiceProgress = saved;
+      } catch {
+        progressStorageAvailable = false;
+      }
+      updatePracticeHome();
+    });
   }
 
   function distinctDays(times, after) {
@@ -718,7 +781,16 @@
     return Array.from(days.values()).slice(-2);
   }
 
-  function mergePracticeProgress(base, changes) {
+  function mergeBest(base, mode, best) {
+    const previous = base.best[mode];
+    const perfectMs = Math.min(previous?.perfectMs ?? Infinity, best.perfectMs ?? Infinity);
+    base.best[mode] = {
+      firstTry: Math.max(previous?.firstTry ?? 0, best.firstTry),
+      perfectMs: Number.isFinite(perfectMs) ? perfectMs : null
+    };
+  }
+
+  function mergePracticeProgress(base, changes, completedRun = null) {
     for (const [id, fact] of Object.entries(changes.facts)) {
       const previous = base.facts[id];
       const missed = Math.max(previous?.missed ?? 0, fact.missed);
@@ -729,27 +801,31 @@
       };
     }
     for (const [mode, best] of Object.entries(changes.best)) {
-      const previous = base.best[mode];
-      const perfectMs = Math.min(previous?.perfectMs ?? Infinity, best.perfectMs ?? Infinity);
-      base.best[mode] = {
-        firstTry: Math.max(previous?.firstTry ?? 0, best.firstTry),
-        perfectMs: Number.isFinite(perfectMs) ? perfectMs : null
-      };
+      mergeBest(base, mode, best);
+    }
+    if (changes.runIds.length) base.runIds = [...new Set([...base.runIds, ...changes.runIds])];
+    if (completedRun && !base.runIds.includes(completedRun.id)) {
+      base.runIds.push(completedRun.id);
+      mergeBest(base, completedRun.mode, completedRun.best);
     }
   }
 
-  function savePracticeProgress(changes) {
-    try {
-      const saved = readSavedProgress();
-      if (!progressStorageAvailable) mergePracticeProgress(saved, practiceProgress);
-      mergePracticeProgress(saved, changes);
-      localStorage.setItem(progressKey, JSON.stringify(saved));
-      practiceProgress = saved;
-      progressStorageAvailable = true;
-    } catch {
-      mergePracticeProgress(practiceProgress, changes);
-      progressStorageAvailable = false;
-    }
+  function savePracticeProgress(changes, completedRun = null) {
+    return withProgressLock(() => {
+      try {
+        const saved = readSavedProgress();
+        if (!progressStorageAvailable) mergePracticeProgress(saved, practiceProgress);
+        mergePracticeProgress(saved, changes, completedRun);
+        localStorage.setItem(progressKey, JSON.stringify(saved));
+        practiceProgress = saved;
+        progressStorageAvailable = true;
+      } catch {
+        mergePracticeProgress(practiceProgress, changes, completedRun);
+        progressStorageAvailable = false;
+      }
+      updatePracticeHome();
+      return progressStorageAvailable;
+    });
   }
 
   function observation(correct) {
@@ -765,9 +841,9 @@
     if (!Object.keys(pendingMatches).length && !best) return;
     const changes = emptyProgress();
     changes.facts = pendingMatches;
-    if (best) changes.best[modeKey()] = best;
-    savePracticeProgress(changes);
+    const completedRun = best ? { id: matchingRunId, mode: modeKey(), best } : null;
     pendingMatches = {};
+    return savePracticeProgress(changes, completedRun);
   }
 
   function practiceCandidates() {
@@ -777,9 +853,11 @@
       const matchHistory = reverse ? null : practiceProgress.facts[matchId(pair)];
       const missed = Math.max(recallHistory?.missed ?? 0, matchHistory?.missed ?? 0);
       const correct = (recallHistory?.correct ?? []).filter(at => at > missed);
+      const retired = missed > 0 && correct.length >= 2;
       return {
         ...prompt,
-        weak: missed > 0 && correct.length < 2,
+        weak: missed > 0 && !retired,
+        retired,
         missed,
         seen: Math.max(recallHistory?.seen ?? 0, matchHistory?.seen ?? 0)
       };
@@ -810,7 +888,8 @@
     practiceStatus.textContent = message;
   }
 
-  function exportPracticeProgress() {
+  async function exportPracticeProgress() {
+    await refreshPracticeProgress();
     const file = new Blob([JSON.stringify(practiceProgress, null, 2) + "\n"], { type: "application/json" });
     const url = URL.createObjectURL(file);
     const link = document.createElement("a");
@@ -825,30 +904,33 @@
     progressFile.value = "";
     if (!file) return;
     try {
-      if (file.size > 256_000) throw new Error("Progress file is too large");
+      if (file.size > 5_000_000) throw new Error("Progress file is too large");
       const incoming = parsePracticeProgress(await file.text());
-      savePracticeProgress(incoming);
-      updatePracticeHome();
-      showPracticeStatus("Progress merged.");
+      const saved = await savePracticeProgress(incoming);
+      showPracticeStatus(saved
+        ? "Progress merged."
+        : "Progress merged in this tab. Export a copy to keep it.");
     } catch {
       showPracticeStatus("Choose a valid Prime Factor 64 progress file.");
     }
   }
 
   function resetPracticeProgress() {
-    if (!window.confirm("Reset your saved practice progress and personal bests?")) return;
-    try {
-      localStorage.removeItem(progressKey);
-      progressStorageAvailable = true;
-    } catch {
-      if (progressStorageAvailable) {
-        showPracticeStatus("Browser storage could not be reset.");
-        return;
+    resetDialog.close();
+    return withProgressLock(() => {
+      try {
+        localStorage.removeItem(progressKey);
+        progressStorageAvailable = true;
+      } catch {
+        if (progressStorageAvailable) {
+          showPracticeStatus("Browser storage could not be reset.");
+          return;
+        }
       }
-    }
-    practiceProgress = emptyProgress();
-    updatePracticeHome();
-    showPracticeStatus(progressStorageAvailable ? "Progress reset." : "Progress reset in this tab.");
+      practiceProgress = emptyProgress();
+      updatePracticeHome();
+      showPracticeStatus(progressStorageAvailable ? "Progress reset." : "Progress reset in this tab.");
+    });
   }
 
   const soundPreferenceKey = "prime-match-55:sound";
@@ -1270,16 +1352,18 @@
   }
 
   function startPractice() {
-    const candidates = practiceCandidates().filter(prompt => prompt.seen);
+    const candidates = practiceCandidates().filter(prompt => prompt.seen && !prompt.retired);
     if (!candidates.some(prompt => prompt.weak)) return;
     candidates.sort((a, b) => Number(b.weak) - Number(a.weak) ||
       (a.weak ? b.missed - a.missed : a.seen - b.seen));
     const results = new Set();
     recallPrompts = [];
+    let missesIncluded = 0;
     for (const prompt of candidates) {
-      if (results.has(prompt.pair.result)) continue;
+      if (results.has(prompt.pair.result) || (prompt.weak && missesIncluded >= 5)) continue;
       results.add(prompt.pair.result);
       recallPrompts.push(prompt);
+      if (prompt.weak) missesIncluded++;
       if (recallPrompts.length === 8) break;
     }
     practicing = true;
@@ -1317,6 +1401,7 @@
     matched = 0;
     practicing = false;
     pendingMatches = {};
+    matchingRunId = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
     attempted = new Set();
     missed = new Set();
     selected = null;
@@ -1362,6 +1447,7 @@
   }
 
   function endGame(completed = true) {
+    if (play.hidden) return;
     const elapsed = elapsedTime();
     stopGameTimers();
     play.hidden = true;
@@ -1397,7 +1483,7 @@
 
   updateSoundControl();
   updateSizeControls();
-  updatePracticeHome();
+  refreshPracticeProgress();
   for (const option of sizeOptions) {
     option.addEventListener("change", () => setBoardSize(option.value));
   }
@@ -1413,8 +1499,15 @@
   startPracticeButton.addEventListener("click", startPractice);
   document.querySelector("#export-progress").addEventListener("click", exportPracticeProgress);
   document.querySelector("#import-progress").addEventListener("click", () => progressFile.click());
-  document.querySelector("#reset-progress").addEventListener("click", resetPracticeProgress);
+  document.querySelector("#reset-progress").addEventListener("click", () => resetDialog.showModal());
+  document.querySelector("#cancel-reset").addEventListener("click", () => resetDialog.close());
+  document.querySelector("#export-before-reset").addEventListener("click", exportPracticeProgress);
+  document.querySelector("#confirm-reset").addEventListener("click", resetPracticeProgress);
   progressFile.addEventListener("change", importPracticeProgress);
+  window.addEventListener("storage", event => {
+    if (event.key !== progressKey && event.key !== null) return;
+    refreshPracticeProgress();
+  });
   soundButton.addEventListener("click", toggleSound);
   pauseButton.addEventListener("click", togglePause);
   endButton.addEventListener("click", () => practicing ? finishPractice() : endGame(false));
