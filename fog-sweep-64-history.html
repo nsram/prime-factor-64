@@ -76,8 +76,11 @@
   <p>Sriram spotted two effects of stepping away mid-round. The break increased the round and game times, and a break between two taps could also earn a Slow label. He pointed to the pause in Prime Factor 64 as the model.</p>
   <p><strong>Pause</strong> now hides the boards and blocks tile input. <strong>Resume</strong> restores the same boards and selection. The round timer and the time between taps use the same active-play clock, with pauses subtracted. The Slow threshold remains five seconds of active play.</p>
 
+  <h2>Project home</h2>
+  <p>Sriram noticed that Fog Sweep 64 needed the same way back to the project index as Prime Factor 64. The header now links to the page where players can choose either game or open the learning guide.</p>
+
   <h2>Technical version log</h2>
-  <p class="note">Entries 1–4 count the saved <code>dist/index.html</code> at each original commit. Entry 5 counts <code>fog-sweep-64.html</code> in Update 2, with changes measured against GitHub commit <code>96ec5a8</code>. Blank lines count. CSS and JavaScript count lines inside their tags. HTML counts the remaining lines, including the tags.</p>
+  <p class="note">Entries 1–4 count the saved <code>dist/index.html</code> at each original commit. Entries 5 and 6 count the packaged <code>fog-sweep-64.html</code> in Updates 2 and 3, with changes measured against GitHub commits <code>96ec5a8</code> and <code>bde565d</code> respectively. Blank lines count. CSS and JavaScript count lines inside their tags. HTML counts the remaining lines, including the tags.</p>
   <div class="table-scroll" role="region" aria-label="Technical version log" tabindex="0">
     <table>
       <thead><tr><th scope="col">Version</th><th scope="col">JS LOC</th><th scope="col">CSS LOC</th><th scope="col">HTML LOC</th><th scope="col">Total LOC</th><th scope="col">Diff</th><th scope="col">Feature change</th><th scope="col">Implementation</th></tr></thead>
@@ -112,10 +115,17 @@
             <td class="numeric">725</td><td class="numeric">+51 / −10</td>
             <td>Pause and resume mid-round.</td><td>Preserves tile state and uses one pause-adjusted clock for rounds and successful matches.</td>
           </tr>
+          <tr>
+            <th scope="row">6<br>Update 3</th>
+            <td class="numeric">423</td><td class="numeric">241</td><td class="numeric">75</td>
+            <td class="numeric">739</td><td class="numeric">+15 / −1</td>
+            <td>Project home link.</td><td>Links to the project index and moves the game controls to a second row on narrow screens.</td>
+          </tr>
       </tbody>
     </table>
   </div>
   <p class="note">Update 2 SHA-256 for <code>fog-sweep-64.html</code><br><code style="overflow-wrap: anywhere">cc575ed510777a07c5b8019e1ec2f722f76abcb542bb339c4a115a8480261aae</code></p>
+  <p class="note">Update 3 SHA-256 for <code>fog-sweep-64.html</code><br><code style="overflow-wrap: anywhere">e06ed0bca971536509223da60be0a635725071e1c3a4faecea847a4d696b2e21</code></p>
   <p class="note">The companion <code>fog-sweep-64-git-diffs.zip</code> contains four ordered patches and replay instructions for the original saved versions.</p>
 </main>
 </body>

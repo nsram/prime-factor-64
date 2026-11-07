@@ -30,7 +30,7 @@
   }
   button { font: inherit; touch-action: manipulation; }
   button:enabled { cursor: pointer; }
-  button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   .shell { width: min(100% - 1.5rem, 58rem); margin-inline: auto; }
   .masthead {
     min-height: 3.8rem;
@@ -47,6 +47,16 @@
     gap: .6rem;
     font-size: .83rem;
     font-weight: 760;
+  }
+  .project-home {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-inline-start: auto;
+    color: var(--mint);
+    font-size: .82rem;
+    font-weight: 700;
+    text-underline-offset: .22em;
   }
   .mark {
     display: grid;
@@ -232,6 +242,9 @@
     .stat { padding: .33rem .45rem; }
     .stat span { font-size: .65rem; }
   }
+  @media (max-width: 30rem) {
+    .controls { flex-basis: 100%; }
+  }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -241,6 +254,7 @@
 <div class="shell">
   <header class="masthead">
     <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span> Fog Sweep 64</div>
+    <a class="project-home" href="index.html">Project home</a>
     <div class="controls">
       <button class="control" id="sound" type="button" aria-pressed="true">Sound on</button>
       <button class="control" id="pause" type="button" aria-controls="boards">Pause</button>
