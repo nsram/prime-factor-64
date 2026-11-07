@@ -35,7 +35,6 @@
   .masthead {
     min-height: 3.8rem;
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: .5rem;
@@ -52,11 +51,11 @@
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-    margin-inline-start: auto;
     color: var(--mint);
     font-size: .82rem;
     font-weight: 700;
     text-underline-offset: .22em;
+    white-space: nowrap;
   }
   .mark {
     display: grid;
@@ -68,7 +67,14 @@
   }
   .mark i { width: 5px; height: 5px; border-radius: 1px; background: var(--mint); }
   .mark i:nth-child(2), .mark i:nth-child(3) { opacity: .35; }
-  .controls { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    gap: .4rem;
+    margin-inline-start: auto;
+  }
   .control, .next {
     min-height: 44px;
     padding: .4rem .7rem;
@@ -119,6 +125,7 @@
   .message {
     display: flex;
     align-items: center;
+    gap: .25rem .75rem;
     min-height: 3.1rem;
   }
   #feedback { margin: .38rem 0; font-size: .88rem; color: var(--muted); }
@@ -243,7 +250,10 @@
     .stat span { font-size: .65rem; }
   }
   @media (max-width: 30rem) {
-    .controls { flex-basis: 100%; }
+    .message { flex-wrap: wrap; padding-block: .25rem; }
+    .controls { flex-shrink: 1; }
+    #feedback { flex-basis: 100%; order: 1; }
+    .control { padding-inline: .5rem; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -255,11 +265,6 @@
   <header class="masthead">
     <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span> Fog Sweep 64</div>
     <a class="project-home" href="index.html">Project home</a>
-    <div class="controls">
-      <button class="control" id="sound" type="button" aria-pressed="true">Sound on</button>
-      <button class="control" id="pause" type="button" aria-controls="boards">Pause</button>
-      <button class="control" id="restart" type="button">New game</button>
-    </div>
   </header>
   <main>
     <p class="eyebrow">Four rounds · 64 facts</p>
@@ -273,6 +278,11 @@
     <div class="round-track" id="round-track" aria-hidden="true"></div>
     <div class="message">
       <p id="feedback" role="status" aria-atomic="true"></p>
+      <div class="controls">
+        <button class="control" id="sound" type="button" aria-pressed="true">Sound on</button>
+        <button class="control" id="pause" type="button" aria-controls="boards">Pause</button>
+        <button class="control" id="restart" type="button">New game</button>
+      </div>
     </div>
     <div class="boards" id="boards">
       <section class="board" aria-labelledby="expressions-title">
