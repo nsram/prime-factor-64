@@ -168,6 +168,7 @@
 <p>Chromium checks covered reopening after a miss, retiring a prompt across two dates, exporting and restoring a backup, and completing games with recall off, two, or four. The checks also exercised scoring, pause and resume, and the completion cue.</p>
 <p>In Update 7, Sriram brought five fixes from Grok Bot’s review. The drill reserves room for older facts by capping misses at five. The app backs up unreadable progress and shows a recovery notice. Exports read the latest saved data, tabs refresh on storage changes, and an in-page reset dialog offers an export before confirmation. Completed matching runs have stable IDs for deduplication. A stress test exposed an overlapping-save race between tabs, so the app serializes progress operations where Web Locks are available.</p>
 <p>In Update 8, Grok Bot proposed using Fog Sweep 64 misses to build the same practice history. A completed Fog Sweep round contributes first-try results to Practice weak facts. Retry counts as a miss, and a slow first-try match counts as seen. Retirement still takes two unaided correct recall answers on different days in Prime Factor 64. Both games use the same storage safeguards, and Prime Factor 64 records its own personal bests.</p>
+<p>In Update 9, Muse proposed a local outbox to preserve a completed round when its save was waiting for another tab. The shared script stores each batch synchronously, then merges it under the existing lock. This lets the review and Project home respond immediately.</p>
 <p class="note"><a href="prime-factor-64.html">Play Prime Factor 64</a> · <a href="prime-factor-64.html" download="prime-factor-64.html">Download the game HTML</a> · <a href="practice-progress.js" download>Download the practice script</a>. Keep both files together for offline play.</p>
 <h2 id="ui-history-from-the-first-release">UI history from the first release</h2>
 <p>The log follows the original saved versions and the practice-progress update. It records changes to the screen, sounds, and controls.</p>
@@ -212,6 +213,7 @@
     <tr><td>22  Browser tab icon</td><td>Four lime tiles on dark green identify Prime Factor 64 when both games are open.</td></tr>
     <tr><td>23  Practice progress fixes</td><td>Older facts have room in the drill. Progress reflects other tabs, and Reset opens a dialog with Cancel and Export progress.</td></tr>
     <tr><td>24  Shared practice history</td><td>Practice weak facts also includes first-try misses from completed Fog Sweep 64 rounds.</td></tr>
+    <tr><td>25  Recover pending saves</td><td>Prime Factor loads practice results that were still waiting to save when the player left Fog Sweep.</td></tr>
   </tbody>
 </table>
 </div>
@@ -283,11 +285,11 @@
 <p class="note">The additional factor pairs are 9 × 12 for 108, 8 × 14 for 112, 9 × 14 for 126, and 9 × 16 for 144.</p>
 <p>The final four-pair layout uses two shared-ending pairs on 14 boards and a triple plus a singleton on two. In the eight- and sixteen-pair layouts, every ending used on a board has at least two cards.</p>
 <h3 id="project-record">Project record</h3>
-<p>This chronology follows the project conversation from the first multiplication table through the shared practice update. The original 20 saved versions cover Prime Match 55, Prime Match 60, and Prime Factor 64. Entries 21–24 record saved practice, the tab icon, the practice-progress fixes, and the shared practice update. The counts and equations were checked against the deck rules.</p>
+<p>This chronology follows the project conversation from the first multiplication table through the shared practice update. The original 20 saved versions cover Prime Match 55, Prime Match 60, and Prime Factor 64. Entries 21–25 record saved practice, the tab icon, the practice-progress fixes, shared practice, and the progress outbox. The counts and equations were checked against the deck rules.</p>
 <h2 id="technical-version-log">Technical version log</h2>
-<p>Each number matches the UI history. Entries 01–20 cite the original saved commits. Entries 21–24 count the packaged game files based on GitHub commits <code>fa804dd</code>, <code>9d31917</code>, <code>e4f0f14</code>, and <code>20f0813</code> respectively.</p>
+<p>Each number matches the UI history. Entries 01–20 cite the original saved commits. Entries 21–25 count the packaged game files, with changes measured against GitHub commits <code>fa804dd</code>, <code>9d31917</code>, <code>e4f0f14</code>, <code>20f0813</code>, and <code>6229d4e</code> respectively.</p>
 <p class="note"><a href="prime-factor-64-git-diffs.zip" download>Download the Prime Factor 64 historical diffs</a> for the 20 saved versions leading up to the first project commit on GitHub. The repository’s Git history starts at <code>fa804dd</code> and tracks subsequent changes.</p>
-<p class="note">LOC counts physical lines, including blanks and comments, in the original <code>index.html</code> snapshots and the current <code>prime-factor-64.html</code>. CSS and JS count the lines inside the style and script tags. HTML counts the remaining lines, including those tags. Total is the sum of all three. Update 8 also includes 197 lines in <code>practice-progress.js</code>, shared by both games.</p>
+<p class="note">LOC counts physical lines, including blanks and comments, in the original <code>index.html</code> snapshots and the current <code>prime-factor-64.html</code>. CSS and JS count the lines inside the style and script tags. HTML counts the remaining lines, including those tags. Total is the sum of all three. The shared <code>practice-progress.js</code> has 197 lines in Update 8 and 249 in Update 9.</p>
 <div class="table-scroll" role="region" tabindex="0" aria-label="Technical version log table">
 <table class="wide-table">
   <thead>
@@ -318,6 +320,7 @@
     <tr><td class="numeric">22<br>Update 5</td><td class="numeric">173</td><td class="numeric">324</td><td class="numeric">929</td><td class="numeric">1426</td><td>Browser tab icon</td><td>Links a 32 × 32 PNG based on the four-tile brand mark.</td></tr>
     <tr><td class="numeric">23<br>Update 7</td><td class="numeric">184</td><td class="numeric">336</td><td class="numeric">999</td><td class="numeric">1519</td><td>Practice progress fixes</td><td>Caps misses in the drill, recovers damaged storage, syncs and serializes progress operations across tabs where available, adds an export option to reset confirmation, and deduplicates completed runs.</td></tr>
     <tr><td class="numeric">24<br>Update 8</td><td class="numeric">185</td><td class="numeric">336</td><td class="numeric">847</td><td class="numeric">1368</td><td>Shared practice history</td><td>Moves progress storage into a script shared by both games. Completed Fog Sweep rounds write matching observations with the same fact keys as Prime Factor.</td></tr>
+    <tr><td class="numeric">25<br>Update 9</td><td class="numeric">185</td><td class="numeric">336</td><td class="numeric">847</td><td class="numeric">1368</td><td>Recover pending practice saves</td><td>Validates and merges queued batches under the storage lock. Reset clears queued batches with saved progress.</td></tr>
   </tbody>
 </table>
 </div>
@@ -325,6 +328,8 @@
 <p class="note">Update 5 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">075c43a739e01a9437d0e3444ac3496bc1002364b08f904f9d0be9136ec5f96d</code></p>
 <p class="note">Update 7 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">c8dfb49ee0910f76c02773c50982b2d780cf59731198a49fbbd403f57395ecb2</code></p>
 <p class="note">Update 8 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">6e23654578fffc301068a6ddbb9a1bf6c8232f475348e74d088fd63b16697883</code></p>
+<p class="note">Update 9 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">6e23654578fffc301068a6ddbb9a1bf6c8232f475348e74d088fd63b16697883</code></p>
+<p class="note">Update 9 SHA-256 for <code>practice-progress.js</code><br><code style="overflow-wrap: anywhere">f396b6cbac3265db1f3717943191987c1d9820f795cf0af86154683854c78a0e</code></p>
       <p class="back"><a href="index.html">Back to project home</a></p>
     </article>
   </div>

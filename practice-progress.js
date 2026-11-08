@@ -3,6 +3,8 @@
 window.PracticeProgress = (() => {
   const progressKey = "prime-factor-64:practice-progress";
   const corruptProgressKey = progressKey + ":corrupt-backup";
+  const outboxPrefix = progressKey + ":outbox:";
+  const validRunId = id => typeof id === "string" && /^[0-9a-f]{32}$/.test(id);
   // These mode keys belong to the version 1 Prime Factor backup format.
   const modeLimits = new Map([4, 8, 16].flatMap(size => [16, 32, 48, 64].flatMap(length =>
     [0, 2, 4].map(recall => [`${size}:${length}:${recall}`, length])
@@ -95,13 +97,12 @@ window.PracticeProgress = (() => {
     let state = empty();
     let storageAvailable = true;
 
-    function parse(text) {
-      const data = JSON.parse(text);
+    function validateProgress(data) {
       const object = value => value && typeof value === "object" && !Array.isArray(value);
       const time = value => Number.isSafeInteger(value) && value >= 0 && value <= 8.64e15;
       if (data?.version !== 1 || !object(data.facts) || !object(data.best)) throw new Error("Unknown progress format");
       const runIds = data.runIds === undefined ? [] : data.runIds;
-      if (!Array.isArray(runIds) || !runIds.every(id => typeof id === "string" && /^[0-9a-f]{32}$/.test(id))) {
+      if (!Array.isArray(runIds) || !runIds.every(validRunId)) {
         throw new Error("Invalid completed run IDs");
       }
       for (const [id, fact] of Object.entries(data.facts)) {
@@ -121,6 +122,10 @@ window.PracticeProgress = (() => {
       return { version: 1, facts: data.facts, best: data.best, runIds: [...new Set(runIds)] };
     }
 
+    function parse(text) {
+      return validateProgress(JSON.parse(text));
+    }
+
     function readSaved() {
       const saved = localStorage.getItem(progressKey);
       if (saved === null) return empty();
@@ -135,12 +140,49 @@ window.PracticeProgress = (() => {
       }
     }
 
+    function outboxKeys() {
+      return Object.keys(localStorage).filter(key => key.startsWith(outboxPrefix));
+    }
+
+    function readOutboxEntry(key, text) {
+      try {
+        const { changes, completedRun } = JSON.parse(text);
+        const checked = validateProgress(changes);
+        if (completedRun !== null) {
+          const { id, mode, best } = completedRun;
+          validateProgress({ ...empty(), best: { [mode]: best }, runIds: [id] });
+        }
+        return { changes: checked, completedRun };
+      } catch {
+        localStorage.setItem(corruptProgressKey + ":" + key.slice(outboxPrefix.length), text);
+        return null;
+      }
+    }
+
+    function syncSaved(unstaged = null, completedRun = null) {
+      const saved = readSaved();
+      const keys = outboxKeys();
+      if (!storageAvailable) merge(saved, state);
+      for (const key of keys) {
+        const text = localStorage.getItem(key);
+        if (text === null) continue;
+        const entry = readOutboxEntry(key, text);
+        if (entry) merge(saved, entry.changes, entry.completedRun);
+      }
+      if (unstaged) merge(saved, unstaged, completedRun);
+      // Keep entries until the main write succeeds. Replaying a batch is safe.
+      if (keys.length || unstaged || !storageAvailable) {
+        localStorage.setItem(progressKey, JSON.stringify(saved));
+        for (const key of keys) localStorage.removeItem(key);
+      }
+      state = saved;
+      storageAvailable = true;
+    }
+
     function refresh() {
       return withProgressLock(() => {
         try {
-          const saved = readSaved();
-          if (!storageAvailable) merge(saved, state);
-          state = saved;
+          syncSaved();
         } catch {
           storageAvailable = false;
         }
@@ -149,14 +191,19 @@ window.PracticeProgress = (() => {
     }
 
     function save(changes, completedRun = null) {
+      let unstaged = changes;
+      try {
+        // A separate key per batch avoids a read-modify-write race across tabs.
+        const id = Array.from(crypto.getRandomValues(new Uint8Array(16)),
+          byte => byte.toString(16).padStart(2, "0")).join("");
+        localStorage.setItem(outboxPrefix + id, JSON.stringify({ changes, completedRun }));
+        unstaged = null;
+      } catch {
+        // Try the direct write under the lock if the outbox could not be written.
+      }
       return withProgressLock(() => {
         try {
-          const saved = readSaved();
-          if (!storageAvailable) merge(saved, state);
-          merge(saved, changes, completedRun);
-          localStorage.setItem(progressKey, JSON.stringify(saved));
-          state = saved;
-          storageAvailable = true;
+          syncSaved(unstaged, completedRun);
         } catch {
           merge(state, changes, completedRun);
           storageAvailable = false;
@@ -169,6 +216,7 @@ window.PracticeProgress = (() => {
     function reset() {
       return withProgressLock(() => {
         try {
+          for (const key of outboxKeys()) localStorage.removeItem(key);
           localStorage.removeItem(progressKey);
           storageAvailable = true;
         } catch {
@@ -182,8 +230,12 @@ window.PracticeProgress = (() => {
 
     if (onChange) {
       window.addEventListener("storage", event => {
-        if (event.key === progressKey || event.key === null) refresh();
+        if (event.key === progressKey || event.key === null ||
+            (event.key.startsWith(outboxPrefix) && event.newValue !== null)) refresh();
       });
+    } else {
+      // Prime Factor refreshes after wiring its UI. Fog Sweep drains on load too.
+      refresh();
     }
 
     return {
