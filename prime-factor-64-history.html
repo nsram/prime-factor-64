@@ -170,6 +170,7 @@
 <p>In Update 7, Sriram brought five fixes from Grok Bot’s review. The drill reserves room for older facts by capping misses at five. The app backs up unreadable progress and shows a recovery notice. Exports read the latest saved data, tabs refresh on storage changes, and an in-page reset dialog offers an export before confirmation. Completed matching runs have stable IDs for deduplication. A stress test exposed an overlapping-save race between tabs, so the app serializes progress operations where Web Locks are available.</p>
 <p>In Update 8, Grok Bot proposed using Fog Sweep 64 misses to build the same practice history. A completed Fog Sweep round contributes first-try results to Practice weak facts. Retry counts as a miss, and a slow first-try match counts as seen. Retirement still takes two unaided correct recall answers on different days in Prime Factor 64. Both games use the same storage safeguards, and Prime Factor 64 records its own personal bests.</p>
 <p>In Update 9, Muse proposed a local outbox to preserve a completed round when its save was waiting for another tab. The shared script stores each batch synchronously, then merges it under the existing lock. This lets the review and Project home respond immediately.</p>
+<p>Update 10 added Easy Mode to help players build fluent recall. It groups the 64 products into Squares, Next Door, Straddle, and Split at 10 boards. Players can use a strategy reminder, replay a board without a timer, and move to Classic when ready. Classic opens by default. Easy Mode matching and recall stay in the session and leave Practice weak facts and personal bests alone.</p>
 <p class="note"><a href="prime-factor-64.html">Play Prime Factor 64</a> · <a href="prime-factor-64.html" download="prime-factor-64.html">Download the game HTML</a> · <a href="practice-progress.js" download>Download the practice script</a>. Keep both files together for offline play.</p>
 <h2 id="ui-history-from-the-first-release">UI history from the first release</h2>
 <p>The log follows the original saved versions and the practice-progress update. It records changes to the screen, sounds, and controls.</p>
@@ -215,6 +216,7 @@
     <tr><td>23  Practice progress fixes</td><td>Older facts have room in the drill. Progress reflects other tabs, and Reset opens a dialog with Cancel and Export progress.</td></tr>
     <tr><td>24  Shared practice history</td><td>Practice weak facts also includes first-try misses from completed Fog Sweep 64 rounds.</td></tr>
     <tr><td>25  Recover pending saves</td><td>Prime Factor loads practice results that were still waiting to save when the player left Fog Sweep.</td></tr>
+    <tr><td>26  Easy Mode</td><td>The mode selector adds strategy boards of 4, 8, or 16 pairs, with a starting-board picker, discreet reminders, untimed replay, and a Learning Guide link.</td></tr>
   </tbody>
 </table>
 </div>
@@ -323,6 +325,7 @@
     <tr><td class="numeric">23<br>Update 7</td><td class="numeric">184</td><td class="numeric">336</td><td class="numeric">999</td><td class="numeric">1519</td><td>Practice progress fixes</td><td>Caps misses in the drill, recovers damaged storage, syncs and serializes progress operations across tabs where available, adds an export option to reset confirmation, and deduplicates completed runs.</td></tr>
     <tr><td class="numeric">24<br>Update 8</td><td class="numeric">185</td><td class="numeric">336</td><td class="numeric">847</td><td class="numeric">1368</td><td>Shared practice history</td><td>Moves progress storage into a script shared by both games. Completed Fog Sweep rounds write matching observations with the same fact keys as Prime Factor.</td></tr>
     <tr><td class="numeric">25<br>Update 9</td><td class="numeric">185</td><td class="numeric">336</td><td class="numeric">847</td><td class="numeric">1368</td><td>Recover pending practice saves</td><td>Validates and merges queued batches under the storage lock. Reset clears queued batches with saved progress.</td></tr>
+    <tr><td class="numeric">26<br>Update 10</td><td class="numeric">245</td><td class="numeric">376</td><td class="numeric">1061</td><td class="numeric">1682</td><td>Easy Mode</td><td>Deals strategy boards from the existing deck, aligns matches within each section, and keeps Easy observations and results outside the shared practice store.</td></tr>
   </tbody>
 </table>
 </div>
@@ -332,6 +335,7 @@
 <p class="note">Update 8 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">6e23654578fffc301068a6ddbb9a1bf6c8232f475348e74d088fd63b16697883</code></p>
 <p class="note">Update 9 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">6e23654578fffc301068a6ddbb9a1bf6c8232f475348e74d088fd63b16697883</code></p>
 <p class="note">Update 9 SHA-256 for <code>practice-progress.js</code><br><code style="overflow-wrap: anywhere">f396b6cbac3265db1f3717943191987c1d9820f795cf0af86154683854c78a0e</code></p>
+<p class="note">Update 10 SHA-256 for <code>prime-factor-64.html</code><br><code style="overflow-wrap: anywhere">4c89b07d0c2d278948bc784812a4197b39291e0c97c711f4793832e465acdeaa</code></p>
       <p class="back"><a href="index.html">Back to project home</a></p>
     </article>
   </div>

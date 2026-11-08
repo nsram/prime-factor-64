@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f5f4ed">
-<meta name="description" content="A timed mental math game. Match 64 multiplication expressions to their results.">
+<meta name="description" content="Match 64 multiplication expressions to their results in timed Classic or untimed Easy Mode.">
 <title>Prime Factor 64</title>
 <link rel="icon" type="image/png" sizes="32x32" href="prime-factor-64-icon.png">
 <style>
@@ -73,7 +73,7 @@
     color: var(--lime);
     background: var(--forest);
   }
-  .masthead-note, .eyebrow, .column h2, .stat-label {
+  .masthead-note, .eyebrow, .column h2, .column h3, .stat-label {
     color: var(--muted);
     text-transform: uppercase;
     font-size: .7rem;
@@ -185,6 +185,12 @@
   }
   .scorebar strong { color: var(--lime); }
   .scorebar span { font-size: .85rem; }
+  .easy-board-label {
+    margin: 7px 0 0;
+    color: var(--muted);
+    font-size: .8rem;
+    font-weight: 680;
+  }
   .clock { min-width: 3ch; text-align: end; font-size: 1.03rem; }
   .segments { display: flex; gap: 4px; padding-top: 8px; }
   .segments span { flex: 1; height: 4px; border-radius: 2px; background: #dce2d6; }
@@ -228,7 +234,35 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: clamp(10px, 3vw, 20px);
   }
-  .column h2 { margin: 0 0 8px 3px; }
+  .column h2, .column h3 { margin: 0 0 8px 3px; }
+  .easy-hint, .intro p.easy-hint:not(.eyebrow) {
+    margin: -4px 0 12px;
+    color: var(--muted);
+    font-size: .85rem;
+  }
+  .strategy-reminders {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    color: var(--muted);
+    font-size: .85rem;
+    line-height: 1.45;
+  }
+  .strategy-reminders h2, .strategy-reminders p { margin: 0; }
+  .strategy-reminders h2 { display: inline; font-size: inherit; }
+  .strategy-reminders a { margin-left: .55em; color: var(--forest); }
+  .strategy-reminders ul { margin: 4px 0 0; padding-left: 1.2em; }
+  .strategy-reminders summary { width: fit-content; margin-top: 5px; cursor: pointer; }
+  #easy-sections { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .easy-section { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 12px; }
+  .easy-section h2 { margin: 0 0 8px; font-size: 1rem; }
+  .easy-section .board { gap: 8px; }
+  .easy-section .card { padding-inline: 6px; scroll-margin-top: 155px; }
+  .easy-section .card.matched { padding-right: 20px; }
+  .board-complete { margin-top: 8px; }
+  .board-complete h2 { margin: 0 0 14px; }
+  .finish-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .cards { display: grid; gap: 6px; }
   .card {
     position: relative;
@@ -299,6 +333,8 @@
     margin: 0 0 24px;
   }
   .stats[data-recall="true"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .stats[data-easy="true"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats[data-easy="true"][data-recall="true"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .stat { padding: 11px 8px; border: 1px solid var(--line); border-radius: 11px; text-align: center; }
   .stat strong { display: block; font-size: clamp(1.25rem, 4.7vw, 1.85rem); font-variant-numeric: tabular-nums; }
   .stat-label { display: block; margin-top: 3px; }
@@ -326,12 +362,16 @@
   .progress-dialog p { margin: .6rem 0 1rem; color: var(--muted); }
   .progress-dialog .control-button { white-space: normal; }
 
+  @media (max-width: 580px) {
+    #easy-sections { grid-template-columns: minmax(0, 1fr); }
+  }
   @media (max-width: 480px) {
     .game-controls { flex-wrap: wrap; gap: 4px; }
     .feedback { flex-basis: 100%; order: 1; }
     .game-buttons { gap: 4px; }
     .game-buttons .control-button { min-width: 0; padding-inline: 8px; }
-    .stats[data-recall="true"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stats[data-recall="true"],
+    .stats[data-easy="true"][data-recall="true"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 400px) {
     .shell { width: calc(100% - 24px); }
@@ -371,6 +411,14 @@
       <p>Every factor is 19 or less, except for 21 in 21 × 17.</p>
       <div class="example" aria-label="Example. 13 times 17 matches 221.">13 × 17 <span aria-hidden="true">↔</span> 221</div>
       <div class="game-setting">
+        <label for="start-mode">Mode</label>
+        <select id="start-mode" class="mode-option" autocomplete="off">
+          <option value="classic">Classic</option>
+          <option value="easy">Easy Mode</option>
+        </select>
+      </div>
+      <p class="easy-hint" hidden>Practice one or two strategies at a time.</p>
+      <div class="game-setting">
         <label for="start-board-size">Pairs per board</label>
         <select id="start-board-size" class="size-option" autocomplete="off">
           <option value="4" selected>4 pairs</option>
@@ -383,6 +431,10 @@
         <select id="start-board-count" class="board-count-option" autocomplete="off">
           <option value="16" selected>4 boards · 16 matches</option>
         </select>
+      </div>
+      <div class="game-setting easy-start-setting" hidden>
+        <label for="start-easy-start">Start at</label>
+        <select id="start-easy-start" class="easy-start-option" autocomplete="off"></select>
       </div>
       <div class="game-setting">
         <label for="start-recall-count">Recall checks</label>
@@ -429,16 +481,26 @@
           <span id="progress"></span>
           <time id="clock" class="clock" aria-label="Elapsed time">0:00</time>
         </div>
+        <p class="easy-board-label" id="easy-board-label" hidden></p>
         <div class="segments" id="segments" aria-hidden="true"></div>
         <div class="game-controls">
           <p class="feedback" id="feedback" role="status"></p>
           <div class="game-buttons">
             <button class="control-button" id="end-game" type="button">End game</button>
             <button class="control-button" id="sound" type="button" aria-pressed="true">Sound <span id="sound-state" aria-hidden="true">on</span></button>
-            <button class="control-button" id="pause" type="button" aria-controls="board recall">Pause</button>
+            <button class="control-button" id="pause" type="button" aria-controls="board recall board-complete">Pause</button>
           </div>
         </div>
       </div>
+      <section class="strategy-reminders" id="strategy-reminders" aria-labelledby="strategy-heading" hidden>
+        <h2 id="strategy-heading">Strategy reminders</h2>
+        <a href="learning-guide.html">Learning Guide</a>
+        <ul id="strategy-cues"></ul>
+        <details id="strategy-examples">
+          <summary>Show example</summary>
+          <ul id="strategy-example-list"></ul>
+        </details>
+      </section>
       <div class="board" id="board">
         <section class="column" aria-labelledby="expressions-title">
           <h2 id="expressions-title">Expressions</h2>
@@ -448,7 +510,30 @@
           <h2 id="results-title">Results</h2>
           <div class="cards" id="results"></div>
         </section>
+        <div id="easy-sections" hidden></div>
       </div>
+      <template id="easy-section-template">
+        <section class="easy-section">
+          <h2></h2>
+          <div class="board">
+            <section class="column">
+              <h3>Expressions</h3>
+              <div class="cards"></div>
+            </section>
+            <section class="column">
+              <h3>Results</h3>
+              <div class="cards"></div>
+            </section>
+          </div>
+        </section>
+      </template>
+      <section class="panel board-complete" id="board-complete" aria-labelledby="board-complete-title" hidden>
+        <h2 id="board-complete-title">Board complete</h2>
+        <div class="finish-actions">
+          <button class="action" id="easy-next" type="button">Next board</button>
+          <button class="control-button" id="easy-replay-board" type="button">Replay board</button>
+        </div>
+      </section>
       <section class="panel recall" id="recall" aria-labelledby="recall-title" hidden>
         <p class="eyebrow" id="recall-step"></p>
         <h2 id="recall-title" tabindex="-1"></h2>
@@ -478,10 +563,18 @@
       <p class="finish-summary" id="finish-summary"></p>
       <div class="stats" id="finish-stats">
         <div class="stat"><strong id="final-matches"></strong><span class="stat-label">Matched</span></div>
-        <div class="stat"><strong id="final-time"></strong><span class="stat-label">Elapsed</span></div>
+        <div class="stat" id="time-stat"><strong id="final-time"></strong><span class="stat-label">Elapsed</span></div>
         <div class="stat"><strong id="final-accuracy"></strong><span class="stat-label">First try</span></div>
         <div class="stat" id="recall-stat" hidden><strong id="final-recall"></strong><span class="stat-label">Recall</span></div>
       </div>
+      <div class="game-setting">
+        <label for="replay-mode">Mode</label>
+        <select id="replay-mode" class="mode-option" autocomplete="off">
+          <option value="classic">Classic</option>
+          <option value="easy">Easy Mode</option>
+        </select>
+      </div>
+      <p class="easy-hint" hidden>Practice one or two strategies at a time.</p>
       <div class="game-setting">
         <label for="replay-board-size">Pairs per board</label>
         <select id="replay-board-size" class="size-option" autocomplete="off">
@@ -496,6 +589,10 @@
           <option value="16" selected>4 boards · 16 matches</option>
         </select>
       </div>
+      <div class="game-setting easy-start-setting" hidden>
+        <label for="replay-easy-start">Start at</label>
+        <select id="replay-easy-start" class="easy-start-option" autocomplete="off"></select>
+      </div>
       <div class="game-setting">
         <label for="replay-recall-count">Recall checks</label>
         <select id="replay-recall-count" class="recall-option" autocomplete="off">
@@ -504,7 +601,10 @@
           <option value="4">4 per board</option>
         </select>
       </div>
-      <button class="action" id="replay" type="button">Play again</button>
+      <div class="finish-actions">
+        <button class="action" id="replay" type="button">Play again</button>
+        <button class="control-button" id="play-classic" type="button" hidden>Play Classic</button>
+      </div>
       <section class="review" id="review" hidden>
         <h3>Pairs to review</h3>
         <p>A wrong guess counts against the pair you started from.</p>
@@ -603,6 +703,77 @@
   }
 
   const deck = buildDeck();
+  const easyStrategies = {
+    squares: {
+      name: "Squares",
+      cue: "Multiply the number by itself.",
+      example: "10 × 10 = 100"
+    },
+    next: {
+      name: "Next Door",
+      cue: "Square the smaller factor, then add it once.",
+      example: "9 × 10 = 9² + 9 = 90"
+    },
+    straddle: {
+      name: "Straddle",
+      reminder: "Straddle a Square",
+      cue: "Square the midpoint, then subtract the squared offset.",
+      example: "7 × 11 = 9² − 2² = 77"
+    },
+    split: {
+      name: "Split at 10",
+      cue: "Split the teen factor into 10 and the remainder. Multiply the other factor by each part, then add.",
+      example: "4 × 16 = 40 + 24 = 64"
+    }
+  };
+  const easyBatches = [
+    ["squares", [121, 169, 196, 225, 256, 289, 324, 361]],
+    ["next", [132, 156, 182, 210, 240, 272, 306, 342]],
+    ["straddle", [108, 119, 128, 135, 143, 216, 221, 224]],
+    ["straddle", [144, 153, 165, 168, 171, 187, 192, 195]],
+    ["straddle", [117, 247, 252, 255, 285, 288, 323, 357]],
+    ["split", [105, 112, 126, 133, 102, 114, 154, 162]],
+    ["split", [104, 120, 136, 152, 176, 198, 209, 180]],
+    ["split", [204, 228, 208, 234, 238, 266, 270, 304]]
+  ];
+  const easyTeachingPairs = {
+    108: [6, 18],
+    112: [7, 16],
+    126: [7, 18],
+    144: [8, 18]
+  };
+
+  function buildEasyLayouts() {
+    const numbers = { squares: 0, next: 0, straddle: 0, split: 0 };
+    const smallBoards = [];
+    const standardBoards = easyBatches.map(([strategy, results]) => {
+      const name = easyStrategies[strategy].name;
+      const number = ++numbers[strategy];
+      const pairs = results.map(result => ({ result, factors: easyTeachingPairs[result] ?? deck.get(result)[0] }));
+      smallBoards.push(
+        { label: name + " " + (number * 2 - 1), sections: [{ strategy, pairs: pairs.slice(0, 4) }] },
+        { label: name + " " + (number * 2), sections: [{ strategy, pairs: pairs.slice(4) }] }
+      );
+      const label = strategy === "straddle" || strategy === "split" ? name + " " + number : name;
+      return { label, sections: [{ strategy, pairs }] };
+    });
+    const largeBoards = [[0, 1], [2, 5], [3, 6], [4, 7]].map(([first, second]) => {
+      const left = standardBoards[first];
+      const right = standardBoards[second];
+      return { label: left.label + " + " + right.label, sections: [...left.sections, ...right.sections] };
+    });
+    return { 4: smallBoards, 8: standardBoards, 16: largeBoards };
+  }
+
+  const easyLayouts = buildEasyLayouts();
+
+  function dealEasyBoards(size, start, count) {
+    const layouts = easyLayouts[size];
+    return Array.from({ length: count }, (_, index) => {
+      const layout = layouts[(start + index) % layouts.length];
+      return { ...layout, pairs: layout.sections.flatMap(section => section.pairs) };
+    });
+  }
   const intro = document.querySelector("#intro");
   const play = document.querySelector("#play");
   const finish = document.querySelector("#finish");
@@ -613,11 +784,24 @@
   const feedback = document.querySelector("#feedback");
   const board = document.querySelector("#board");
   const scorebar = document.querySelector(".scorebar");
+  const easyBoardLabel = document.querySelector("#easy-board-label");
+  const easySections = document.querySelector("#easy-sections");
+  const easySectionTemplate = document.querySelector("#easy-section-template");
+  const strategyReminders = document.querySelector("#strategy-reminders");
+  const strategyCues = document.querySelector("#strategy-cues");
+  const strategyExamples = document.querySelector("#strategy-examples");
+  const strategyExampleList = document.querySelector("#strategy-example-list");
+  const boardComplete = document.querySelector("#board-complete");
+  const easyNext = document.querySelector("#easy-next");
+  const replayButton = document.querySelector("#replay");
+  const playClassicButton = document.querySelector("#play-classic");
   const endButton = document.querySelector("#end-game");
   const pauseButton = document.querySelector("#pause");
   const pausedMessage = document.querySelector("#paused-message");
   const soundButton = document.querySelector("#sound");
   const soundState = document.querySelector("#sound-state");
+  const modeOptions = document.querySelectorAll(".mode-option");
+  const easyStartOptions = document.querySelectorAll(".easy-start-option");
   const sizeOptions = document.querySelectorAll(".size-option");
   const boardCountOptions = document.querySelectorAll(".board-count-option");
   const recallOptions = document.querySelectorAll(".recall-option");
@@ -658,11 +842,26 @@
   let pausedAt;
   let timer;
 
-  let boardSize = 4;
   const sessionLengths = [16, 32, 48, 64];
-  let sessionMatches = sessionLengths[0];
+  const modePreferenceKey = "prime-factor-64:mode";
+  const setups = {
+    classic: { size: 4, matches: 16, recall: 0 },
+    easy: { size: 8, matches: 16, recall: 0, start: 0 }
+  };
+  let setupMode = "classic";
+  try {
+    if (localStorage.getItem(modePreferenceKey) === "easy") setupMode = "easy";
+  } catch {
+    // Mode selection works without browser storage.
+  }
+  if (new URLSearchParams(location.search).get("mode") === "easy") setupMode = "easy";
 
-  let recallCount = 0;
+  let easyGame = false;
+  let awaitingEasyAdvance = false;
+  let recallBeforeBoard;
+  let boardSize;
+  let sessionMatches;
+  let recallCount;
   let recallStartedAt;
   let recallPrompts;
   let recallIndex;
@@ -683,15 +882,15 @@
     ...options.map(factors => ({ pair: { result, factors }, reverse: false }))
   ]).flat();
 
-  function modeKey() {
-    return boardSize + ":" + sessionMatches + ":" + recallCount;
+  function modeKey(size, matches, recallChecks) {
+    return size + ":" + matches + ":" + recallChecks;
   }
 
   function saveMatchingProgress(best = null) {
-    if (!practiceStore || (!Object.keys(pendingMatches).length && !best)) return;
+    if (easyGame || !practiceStore || (!Object.keys(pendingMatches).length && !best)) return;
     const changes = practiceStorage.empty();
     changes.facts = pendingMatches;
-    const completedRun = best ? { id: matchingRunId, mode: modeKey(), best } : null;
+    const completedRun = best ? { id: matchingRunId, mode: modeKey(boardSize, sessionMatches, recallCount), best } : null;
     pendingMatches = {};
     return practiceStore.save(changes, completedRun);
   }
@@ -717,10 +916,11 @@
   }
 
   function updatePersonalBest() {
-    const best = practiceStore?.state.best[modeKey()];
+    const { size, matches, recall: recallChecks } = setups.classic;
+    const best = setupMode === "classic" ? practiceStore?.state.best[modeKey(size, matches, recallChecks)] : null;
     personalBest.hidden = !best;
     if (best) {
-      personalBest.textContent = "Best for these settings: " + best.firstTry + "/" + sessionMatches + " first try." +
+      personalBest.textContent = "Best for these settings: " + best.firstTry + "/" + matches + " first try." +
         (best.perfectMs === null ? "" : " Fastest perfect matching run: " + formatTime(best.perfectMs) + ".");
     }
   }
@@ -808,41 +1008,52 @@
     // Sound can still be toggled when browser storage is unavailable.
   }
 
-  function updateSizeControls() {
-    for (const option of sizeOptions) option.value = String(boardSize);
-    for (const select of boardCountOptions) {
-      select.replaceChildren(...sessionLengths.map(matches => {
-        const option = document.createElement("option");
-        const count = matches / boardSize;
-        option.value = String(matches);
-        option.textContent = count + (count === 1 ? " board" : " boards") + " · " + matches + " matches";
-        return option;
-      }));
-      select.value = String(sessionMatches);
+  function saveModePreference() {
+    try {
+      localStorage.setItem(modePreferenceKey, setupMode);
+    } catch {
+      // The selection remains in effect for this page.
     }
   }
 
-  function setBoardSize(value) {
-    const size = Number(value);
-    if (size === boardSize) return;
-    boardSize = size;
-    updateSizeControls();
+  function selectMode(mode) {
+    setupMode = mode;
+    saveModePreference();
+    updateSetupControls();
     updatePersonalBest();
   }
 
-  function setSessionMatches(value) {
-    const matches = Number(value);
-    if (matches === sessionMatches) return;
-    sessionMatches = matches;
-    for (const select of boardCountOptions) select.value = value;
-    updatePersonalBest();
+  function updateSetupControls() {
+    const easy = setupMode === "easy";
+    const { size, matches, recall: recallChecks, start } = setups[setupMode];
+    for (const select of modeOptions) select.value = setupMode;
+    for (const hint of document.querySelectorAll(".easy-hint")) hint.hidden = !easy;
+    for (const select of sizeOptions) select.value = String(size);
+    for (const select of boardCountOptions) {
+      select.replaceChildren(...sessionLengths.map(length => {
+        const count = length / size;
+        return new Option(count + (count === 1 ? " board" : " boards") + " · " + length + " matches", length);
+      }));
+      select.value = String(matches);
+    }
+    for (const select of recallOptions) select.value = String(recallChecks);
+    for (const select of easyStartOptions) {
+      select.closest(".easy-start-setting").hidden = !easy;
+      if (!easy) continue;
+      select.replaceChildren(...easyLayouts[size].map(({ label }, index) => new Option(label, index)));
+      select.value = String(start);
+    }
+    replayButton.textContent = easy ? "Replay Easy Mode" : "Play again";
+    playClassicButton.hidden = !easy;
   }
 
-  function setRecallCount(value) {
-    const count = Number(value);
-    if (count === recallCount) return;
-    recallCount = count;
-    for (const option of recallOptions) option.value = value;
+  function setSetupOption(key, value) {
+    const setup = setups[setupMode];
+    const choice = Number(value);
+    if (setup[key] === choice) return;
+    setup[key] = choice;
+    if (key === "size" && setupMode === "easy") setup.start = 0;
+    updateSetupControls();
     updatePersonalBest();
   }
 
@@ -952,8 +1163,13 @@
     scorebar.hidden = practicing;
     segments.hidden = practicing;
     endButton.textContent = practicing ? "End practice" : "End game";
-    board.hidden = paused || recalling;
-    feedback.hidden = paused || recalling;
+    const matching = !paused && !recalling && !awaitingEasyAdvance && !practicing;
+    clock.hidden = easyGame;
+    easyBoardLabel.hidden = !easyGame || practicing;
+    board.hidden = !matching;
+    strategyReminders.hidden = !easyGame || !matching;
+    boardComplete.hidden = paused || !awaitingEasyAdvance || practicing;
+    feedback.hidden = !matching;
     recall.hidden = paused || !recalling;
     pausedMessage.hidden = !paused;
     updateSoundOutput();
@@ -966,12 +1182,12 @@
       pausedAt = now;
       window.clearInterval(timer);
       if (advanceAt !== null) window.clearTimeout(advanceTimer);
-      tickClock();
+      if (!easyGame) tickClock();
     } else {
       if (recallStartedAt === null) {
         startedAt += now - pausedAt;
         if (advanceAt !== null) scheduleBoardAdvance(Math.max(0, advanceAt - pausedAt));
-        timer = window.setInterval(tickClock, 100);
+        if (!easyGame) timer = window.setInterval(tickClock, 100);
       }
       pausedAt = null;
       prepareAudio();
@@ -988,9 +1204,14 @@
   }
 
   function drawBoard(focusSide = "expression") {
-    const pairs = boards[boardIndex];
+    const { pairs, label, sections } = boards[boardIndex];
     advanceAt = null;
     boardMatches = 0;
+    if (easyGame) {
+      recallBeforeBoard = { attempts: recallAttempts, correct: recallCorrect };
+      easyBoardLabel.textContent = "Easy Mode · " + label;
+      drawStrategyReminders(sections);
+    }
     matchDurations = new Map();
     wrongCards = [];
     boardNumber.textContent = "Board " + (boardIndex + 1) + " of " + boards.length;
@@ -1001,16 +1222,50 @@
       return segment;
     }));
 
-    for (const [side, column] of Object.entries(columns)) {
-      column.replaceChildren(...shuffle(pairs).map(pair => makeCard(pair, side)));
+    const grouped = easyGame && sections.length > 1;
+    easySections.hidden = !grouped;
+    easySections.replaceChildren();
+    for (const column of Object.values(columns)) {
+      column.closest(".column").hidden = grouped;
+      column.replaceChildren();
     }
 
+    const groups = grouped ? sections.map((section, index) => {
+      const panel = easySectionTemplate.content.firstElementChild.cloneNode(true);
+      const heading = panel.querySelector("h2");
+      heading.id = "easy-strategy-" + index;
+      heading.textContent = easyStrategies[section.strategy].name;
+      panel.setAttribute("aria-labelledby", heading.id);
+      const [expression, result] = panel.querySelectorAll(".cards");
+      easySections.append(panel);
+      return { columns: { expression, result }, pairs: section.pairs, matched: 0 };
+    }) : [{ columns, pairs, matched: 0 }];
+
+    for (const group of groups) {
+      for (const [side, column] of Object.entries(group.columns)) {
+        column.replaceChildren(...shuffle(group.pairs).map(pair => makeCard(pair, side, group)));
+      }
+    }
     showFeedback("Choose any card.");
     window.scrollTo(0, 0);
-    columns[focusSide].firstElementChild.focus({ preventScroll: true });
+    groups[0].columns[focusSide].firstElementChild.focus({ preventScroll: true });
   }
 
-  function makeCard(pair, side) {
+  function drawStrategyReminders(sections) {
+    const strategies = sections.map(({ strategy }) => easyStrategies[strategy]);
+    const render = key => strategies.map(strategy => {
+      const item = document.createElement("li");
+      const title = document.createElement("strong");
+      title.textContent = strategy.reminder ?? strategy.name;
+      item.append(title, " · " + strategy[key]);
+      return item;
+    });
+    strategyCues.replaceChildren(...render("cue"));
+    strategyExampleList.replaceChildren(...render("example"));
+    strategyExamples.open = false;
+  }
+
+  function makeCard(pair, side, group) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "card";
@@ -1021,7 +1276,7 @@
     } else {
       button.textContent = pair.result;
     }
-    button.addEventListener("click", event => chooseCard({ button, pair, side }, event.detail === 0));
+    button.addEventListener("click", event => chooseCard({ button, pair, side, group }, event.detail === 0));
     return button;
   }
 
@@ -1035,17 +1290,18 @@
     card.button.disabled = true;
     card.button.setAttribute("aria-label",
       (card.button.getAttribute("aria-label") || card.button.textContent) + ", matched");
-    const column = columns[card.side];
-    column.insertBefore(card.button, column.children[boardMatches]);
+    const column = card.group.columns[card.side];
+    column.insertBefore(card.button, column.children[card.group.matched]);
   }
 
   function chooseCard(card, viaKeyboard) {
-    if (pausedAt !== null || recallStartedAt !== null || advanceAt !== null || card.button.disabled) return;
+    if (pausedAt !== null || recallStartedAt !== null || advanceAt !== null ||
+        awaitingEasyAdvance || card.button.disabled) return;
 
     for (const button of wrongCards) button.classList.remove("wrong");
     wrongCards = [];
 
-    if (!selected || selected.side === card.side) {
+    if (!selected || selected.side === card.side || selected.group !== card.group) {
       const deselecting = selected?.button === card.button;
       if (selected) markSelected(selected, false);
       selected = deselecting ? null : card;
@@ -1063,7 +1319,7 @@
     markSelected(first, false);
     selected = null;
     const correct = first.pair.result === card.pair.result;
-    if (practiceStore && !attempted.has(first.pair)) {
+    if (!easyGame && practiceStore && !attempted.has(first.pair)) {
       pendingMatches[practiceStorage.matchId(first.pair)] = practiceStorage.observation(correct);
     }
     attempted.add(first.pair);
@@ -1080,16 +1336,20 @@
 
     lockCard(first);
     lockCard(card);
+    first.group.matched++;
     matchDurations.set(first.pair, elapsedTime() - selectedAt);
     matched++;
     boardMatches++;
     updateProgress();
 
-    if (boardMatches === boards[boardIndex].length) {
+    if (boardMatches === boards[boardIndex].pairs.length) {
       advanceSide = first.side;
       if (recallCount > 0) {
         beginRecall();
         saveMatchingProgress();
+        playCue("board");
+      } else if (easyGame) {
+        completeEasyBoard();
         playCue("board");
       } else if (matched === total) {
         endGame();
@@ -1102,7 +1362,9 @@
     } else {
       showFeedback("Matched!", "correct");
       if (viaKeyboard) {
-        columns[first.side].querySelector("button:not(:disabled)").focus({ preventScroll: true });
+        const next = first.group.columns[first.side].querySelector("button:not(:disabled)") ??
+          easySections.querySelector("button:not(:disabled)");
+        next?.focus({ preventScroll: !easyGame });
       }
       playCue("match");
     }
@@ -1111,8 +1373,8 @@
   function beginRecall() {
     recallStartedAt = performance.now();
     window.clearInterval(timer);
-    tickClock();
-    recallPrompts = shuffle(boards[boardIndex]).sort((a, b) =>
+    if (!easyGame) tickClock();
+    recallPrompts = shuffle(boards[boardIndex].pairs).sort((a, b) =>
       Number(missed.has(b)) - Number(missed.has(a)) || matchDurations.get(b) - matchDurations.get(a)
     ).slice(0, recallCount).map((pair, index) => ({ pair, reverse: index % 2 === 1 }));
     recallIndex = 0;
@@ -1165,7 +1427,7 @@
       playCue(correct ? "recall" + (recallIndex % 4 + 1) : "miss");
     }
 
-    if (practiceStore) {
+    if (practiceStore && (practicing || !easyGame)) {
       const changes = practiceStorage.empty();
       changes.facts[practiceStorage.recallId(pair, reverse)] = practiceStorage.observation(correct);
       practiceStore.save(changes);
@@ -1177,7 +1439,8 @@
     recallReveal.hidden = true;
     recallNext.textContent =
       recallIndex + 1 < recallPrompts.length ? "Next prompt" :
-      practicing ? "Finish practice" : matched === total ? "See score" : "Next board";
+      practicing ? "Finish practice" : easyGame ? "Finish recall" :
+      matched === total ? "See score" : "Next board";
     recallNext.focus({ preventScroll: true });
   }
 
@@ -1191,6 +1454,8 @@
       drawRecall();
     } else if (practicing) {
       finishPractice();
+    } else if (easyGame) {
+      completeEasyBoard();
     } else if (matched === total) {
       endGame();
     } else {
@@ -1201,6 +1466,43 @@
       drawBoard(advanceSide);
       timer = window.setInterval(tickClock, 100);
     }
+  }
+
+  function completeEasyBoard() {
+    recallStartedAt = null;
+    awaitingEasyAdvance = true;
+    easyNext.textContent = matched === total ? "See results" : "Next board";
+    updateGameView();
+    window.scrollTo(0, 0);
+    easyNext.focus({ preventScroll: true });
+  }
+
+  function advanceEasyBoard() {
+    if (!awaitingEasyAdvance || boardComplete.hidden) return;
+    if (matched === total) {
+      endGame();
+      return;
+    }
+    awaitingEasyAdvance = false;
+    boardIndex++;
+    updateGameView();
+    drawBoard();
+  }
+
+  function replayEasyBoard() {
+    if (!awaitingEasyAdvance || boardComplete.hidden) return;
+    matched -= boardMatches;
+    // Each product appears on only one board, so this preserves earlier attempts.
+    for (const pair of boards[boardIndex].pairs) {
+      attempted.delete(pair);
+      missed.delete(pair);
+    }
+    recallAttempts = recallBeforeBoard.attempts;
+    recallCorrect = recallBeforeBoard.correct;
+    awaitingEasyAdvance = false;
+    updateGameView();
+    updateProgress();
+    drawBoard();
   }
 
   function startPractice() {
@@ -1241,19 +1543,26 @@
       : "Practice finished. No answers submitted.");
   }
 
-  function startGame(event) {
-    const settings = event.currentTarget.closest(".panel");
-    setSessionMatches(settings.querySelector(".board-count-option").value);
-    setBoardSize(settings.querySelector(".size-option").value);
-    setRecallCount(settings.querySelector(".recall-option").value);
-    boards = dealBoards(deck, boardSize).slice(0, sessionMatches / boardSize);
-    total = boards.length * boardSize;
+  function startGame() {
+    const setup = setups[setupMode];
+    easyGame = setupMode === "easy";
+    awaitingEasyAdvance = false;
+    saveModePreference();
+    boardSize = setup.size;
+    sessionMatches = setup.matches;
+    recallCount = setup.recall;
+    const count = sessionMatches / boardSize;
+    boards = easyGame
+      ? dealEasyBoards(boardSize, setup.start, count)
+      : dealBoards(deck, boardSize).slice(0, count).map(pairs => ({ pairs }));
+    total = sessionMatches;
     board.dataset.size = String(boardSize);
     boardIndex = 0;
     matched = 0;
     practicing = false;
     pendingMatches = {};
-    matchingRunId = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
+    matchingRunId = easyGame ? null :
+      Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
     attempted = new Set();
     missed = new Set();
     selected = null;
@@ -1271,7 +1580,7 @@
     drawBoard();
     prepareAudio();
     startedAt = performance.now();
-    timer = window.setInterval(tickClock, 100);
+    if (!easyGame) timer = window.setInterval(tickClock, 100);
   }
 
   function stopGameTimers() {
@@ -1290,6 +1599,7 @@
     if (soundOutput) soundOutput.gain.value = 0;
     saveMatchingProgress();
     practicing = false;
+    awaitingEasyAdvance = false;
     play.hidden = true;
     finish.hidden = true;
     intro.hidden = false;
@@ -1315,9 +1625,12 @@
     document.querySelector("#finish-summary").textContent =
       attempts === 0 ? "No pairs attempted yet." : attempts + (attempts === 1 ? " pair attempted." : " pairs attempted.");
     document.querySelector("#final-matches").textContent = matched + "/" + total;
-    document.querySelector("#final-time").textContent = formatTime(elapsed);
+    document.querySelector("#time-stat").hidden = easyGame;
+    document.querySelector("#final-time").textContent = easyGame ? "" : formatTime(elapsed);
     document.querySelector("#final-accuracy").textContent = attempts ? firstTry + "/" + attempts : "—";
-    document.querySelector("#finish-stats").dataset.recall = String(recallCount > 0);
+    const finishStats = document.querySelector("#finish-stats");
+    finishStats.dataset.easy = String(easyGame);
+    finishStats.dataset.recall = String(recallCount > 0);
     document.querySelector("#recall-stat").hidden = recallCount === 0;
     document.querySelector("#final-recall").textContent = recallAttempts ? recallCorrect + "/" + recallAttempts : "—";
 
@@ -1334,19 +1647,14 @@
   }
 
   updateSoundControl();
-  updateSizeControls();
+  updateSetupControls();
   if (practiceStore) practiceStore.refresh();
   else updatePracticeHome();
-  for (const option of sizeOptions) {
-    option.addEventListener("change", () => setBoardSize(option.value));
-  }
-  for (const select of boardCountOptions) {
-    select.addEventListener("change", () => setSessionMatches(select.value));
-  }
-  for (const option of recallOptions) {
-    option.value = String(recallCount);
-    option.addEventListener("change", () => setRecallCount(option.value));
-  }
+  for (const select of modeOptions) select.addEventListener("change", () => selectMode(select.value));
+  for (const select of sizeOptions) select.addEventListener("change", () => setSetupOption("size", select.value));
+  for (const select of boardCountOptions) select.addEventListener("change", () => setSetupOption("matches", select.value));
+  for (const select of recallOptions) select.addEventListener("change", () => setSetupOption("recall", select.value));
+  for (const select of easyStartOptions) select.addEventListener("change", () => setSetupOption("start", select.value));
   document.querySelector("#home").addEventListener("click", returnHome);
   document.querySelector("#start").addEventListener("click", startGame);
   startPracticeButton.addEventListener("click", startPractice);
@@ -1362,7 +1670,13 @@
   endButton.addEventListener("click", () => practicing ? finishPractice() : endGame(false));
   recallForm.addEventListener("submit", submitRecall);
   recallReveal.addEventListener("click", () => answerRecall(true));
-  document.querySelector("#replay").addEventListener("click", startGame);
+  replayButton.addEventListener("click", startGame);
+  easyNext.addEventListener("click", advanceEasyBoard);
+  document.querySelector("#easy-replay-board").addEventListener("click", replayEasyBoard);
+  playClassicButton.addEventListener("click", () => {
+    selectMode("classic");
+    finish.querySelector(".mode-option").focus();
+  });
 </script>
 </body>
 </html>
