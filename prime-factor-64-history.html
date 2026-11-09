@@ -25,13 +25,13 @@
     <p class="eyebrow">Project history</p>
     <h1>How We Built Prime Factor 64</h1>
     <p class="lede">A case study in human and AI collaboration</p>
-    <p class="meta">Project by Sriram Natarajan with ChatGPT  |  November 5–6, 2026</p>
+    <p class="meta">Project by Sriram Natarajan with ChatGPT  |  November 5–8, 2026</p>
   </header>
   <div class="doc-layout">
     <nav class="toc" aria-label="On this page">
       <details open>
         <summary>On this page</summary>
-        <ul><li><a href="#the-seven-primes">The seven primes</a></li><li><a href="#two-squares-that-needed-a-cue">Two squares that needed a cue</a></li><li><a href="#from-39-products-to-55-results">From 39 products to 55 results</a></li><li><a href="#playing-the-first-game">Playing the first game</a></li><li><a href="#board-sizes-and-the-move-to-60">Board sizes and the move to 60</a></li><li><a href="#the-final-deck-and-session-controls">The final deck and session controls</a></li><li><a href="#the-final-playtest-and-polish">Polishing the original release</a></li><li><a href="#practice-across-sessions">Practice across sessions</a></li><li><a href="#ui-history-from-the-first-release">UI history from the first release</a></li><li><a href="#ui-history-through-the-final-edit">UI history since the 60-result game</a></li><li><a href="#how-the-name-was-chosen">How the name was chosen</a></li><li><a href="#other-paths-we-considered">Other paths we considered</a></li><li><a href="#the-64-results-in-the-final-deck">The 64 results in the final deck</a></li><li><a href="#technical-version-log">Technical version log</a></li></ul>
+        <ul><li><a href="#the-seven-primes">The seven primes</a></li><li><a href="#two-squares-that-needed-a-cue">Two squares that needed a cue</a></li><li><a href="#from-39-products-to-55-results">From 39 products to 55 results</a></li><li><a href="#playing-the-first-game">Playing the first game</a></li><li><a href="#board-sizes-and-the-move-to-60">Board sizes and the move to 60</a></li><li><a href="#the-final-deck-and-session-controls">The final deck and session controls</a></li><li><a href="#the-final-playtest-and-polish">Polishing the original release</a></li><li><a href="#practice-across-sessions">Practice across sessions</a></li><li><a href="#ui-history-from-the-first-release">UI history from the first release</a></li><li><a href="#ui-history-through-the-final-edit">UI history since the 60-result game</a></li><li><a href="#how-the-name-was-chosen">How the name was chosen</a></li><li><a href="#other-paths-we-considered">Other paths we considered</a></li><li><a href="#the-64-results-in-the-final-deck">The 64 results in the final deck</a></li><li><a href="#automated-testing">Automated testing</a></li><li><a href="#technical-version-log">Technical version log</a></li></ul>
       </details>
     </nav>
     <article class="doc-body">
@@ -290,6 +290,9 @@
 <p>The final four-pair layout uses two shared-ending pairs on 14 boards and a triple plus a singleton on two. In the eight- and sixteen-pair layouts, every ending used on a board has at least two cards.</p>
 <h3 id="project-record">Project record</h3>
 <p>This chronology follows the project conversation from the first multiplication table through the shared practice update. The original 20 saved versions cover Prime Match 55, Prime Match 60, and Prime Factor 64. Entries 21–25 record saved practice, the tab icon, the practice-progress fixes, shared practice, and the progress outbox. The counts and equations were checked against the deck rules.</p>
+<h2 id="automated-testing">Automated testing</h2>
+<p>On November 8, 2026, Sriram approved a two-stage testing process. ChatGPT drafted the test specification against <code>f14a00c</code>. Muse independently checked the 64 products, 68 allowed factor pairs, and all 112 Easy Mode setups, and clarified how to test strategy rules that overlap. After approval, ChatGPT added Node and Chromium tests for both games, including recall, pause timing, and recovery of saves queued behind a Web Lock.</p>
+<p>The shared suite detected all 22 targeted mutations in disposable copies. Open questions about unstaged attempts and storage race policies are separate diagnostics. The testing work left the game source and its recorded checksum intact.</p>
 <h2 id="technical-version-log">Technical version log</h2>
 <p>Each number matches the UI history. Entries 01–20 cite the original saved commits. Entries 21–25 count the packaged game files, with changes measured against GitHub commits <code>fa804dd</code>, <code>9d31917</code>, <code>e4f0f14</code>, <code>20f0813</code>, and <code>6229d4e</code> respectively.</p>
 <p class="note"><a href="prime-factor-64-git-diffs.zip" download>Download the Prime Factor 64 historical diffs</a> for the 20 saved versions leading up to the first project commit on GitHub. The repository’s Git history starts at <code>fa804dd</code> and tracks subsequent changes.</p>

@@ -10,7 +10,7 @@ Open `index.html` to choose Prime Factor 64, Fog Sweep 64, or the learning guide
 | `practice-progress.js` | Shared practice storage and backup handling for both games |
 | `prime-factor-64-icon.png` and `fog-sweep-64-icon.png` | Browser tab icons for the two games |
 | `learning-guide.html` | Mental-math guide, worked examples, recall drill, and answer key |
-| `prime-factor-64-history.html` | Case study, UI and technical history through the shared practice update |
+| `prime-factor-64-history.html` | Case study, Easy Mode, practice updates, and testing history |
 | `fog-sweep-64-history.html` | Fog Sweep 64 design history and technical log |
 | `styles.css` | Shared styling for the home page, learning guide, and original case study |
 
@@ -36,6 +36,10 @@ Open both games on the same site in the same browser profile to share progress. 
 Choose **Pause** during a round to hide both boards. **Resume** restores the boards and any tile you had selected. Paused time is excluded from the round time, the game total, and the five-second Slow threshold.
 
 **Project home** in the header returns to the page where you choose either game or open the learning guide.
+
+## Development tests
+
+See the [test guide](tests/README.md) for local setup, browser checks, diagnostics, and the targeted mutation exercise.
 
 ## Push to GitHub
 
